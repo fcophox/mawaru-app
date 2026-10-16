@@ -102,7 +102,7 @@ aside label[hidden] { display:none; }
 .templates[hidden] { display:none; }
 .only-local #localTemplates { margin-top:14px; border-top:0; padding-top:0; }
 .only-local .local-grid { max-height:min(480px, 58vh); }
-.chips { display:flex; flex-wrap:wrap; gap:4px; margin:0 0 10px; padding:4px; background:#141519; border-radius:10px; }
+.chips { display:flex; flex-wrap:wrap; gap:4px; margin:0 0 10px; padding:4px 0; }
 .chip { display:inline-flex; align-items:center; gap:6px; padding:7px 11px; background:transparent; color:#c9cad1; border:0; border-radius:7px; cursor:pointer; font:inherit; font-size:12.5px; }
 .chip svg { width:14px; height:14px; flex:none; }
 .chip:hover { background:#24252c; color:var(--fg); }

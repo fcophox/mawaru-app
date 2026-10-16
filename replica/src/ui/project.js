@@ -219,7 +219,8 @@ export async function newProject(type){
     selectedDevice: 0, camera: { fov: 30 }, format: state.format, background: { ...BG_DEFAULTS }, look: { ...LOOK_DEFAULTS },
   });
   const shot = templateKeyframes(type, devices.map(d => d.group));
-  Object.assign(state, { keyframes: shot.keyframes, duration: shot.duration, currentTime: 0, selected: 1, playing: true, viewDirty: false });
+  // the project opens still at 0 s: the user starts playback when ready
+  Object.assign(state, { keyframes: shot.keyframes, duration: shot.duration, currentTime: 0, selected: 1, playing: false, viewDirty: false });
   renderTimeline();
   history = []; historyIndex = -1; markChanged();
   projStatus.textContent = `Nuevo proyecto: ${m.label}`;
