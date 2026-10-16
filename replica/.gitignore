@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# models converted from your own Rotato downloads: personal use only, never commit
+local-models/

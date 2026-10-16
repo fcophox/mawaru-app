@@ -1,0 +1,18 @@
+# dependencies and builds
+node_modules/
+dist/
+.DS_Store
+
+# Rotato's own material: never published
+#  - bin/: binary slices extracted from Rotato.app for analysis
+#  - out/: REA / Ghidra analysis dumps and decompiled pseudocode
+#  - replica/local-models/: models and presets converted from your own Rotato install
+bin/
+out/
+replica/local-models/
+
+# local tooling for the reverse-engineering session (REA + Ghidra paths on this machine)
+/package.json
+/package-lock.json
+rea-env.sh
+.claude/

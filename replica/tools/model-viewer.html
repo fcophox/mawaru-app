@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Visor de modelos locales</title>
+<style>
+  :root { --bg:#16171b; --panel:#1f2026; --fg:#e8e8ec; --muted:#8a8b94; --accent:#5b8cff; }
+  * { box-sizing:border-box; }
+  body { margin:0; display:flex; height:100vh; background:var(--bg); color:var(--fg); font:13px/1.4 -apple-system,system-ui,sans-serif; }
+  aside { width:260px; flex:none; overflow:auto; background:var(--panel); padding:12px; }
+  aside h1 { font-size:14px; margin:0 0 6px; }
+  aside p { color:var(--muted); font-size:11px; margin:0 0 10px; }
+  #list button { display:flex; gap:8px; align-items:center; width:100%; text-align:left; background:#2a2b33; color:var(--fg); border:1px solid transparent; border-radius:6px; padding:5px; margin-bottom:4px; cursor:pointer; font:inherit; }
+  #list button.active { border-color:var(--accent); }
+  #list img { width:56px; height:30px; object-fit:contain; background:#fff1; border-radius:4px; }
+  #view { flex:1; position:relative; min-width:0; }
+  #info { position:absolute; left:10px; bottom:10px; background:#000a; padding:6px 9px; border-radius:6px; font:11px ui-monospace,monospace; white-space:pre; }
+</style>
+</head>
+<body>
+<aside>
+  <h1>Modelos locales</h1>
+  <p>Convertidos con <code>tools/rotato2glb.py</code> desde tus escenas de Rotato. Solo uso personal.</p>
+  <div id="list"></div>
+</aside>
+<div id="view"><div id="info"></div></div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const view = document.getElementById('view'), info = document.getElementById('info');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+view.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#e9e6ff');
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 1000);
+const controls = new OrbitControls(camera, renderer.domElement);
+function resize(){ renderer.setSize(view.clientWidth, view.clientHeight); camera.aspect = view.clientWidth / view.clientHeight; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+
+// Test pattern for screens: "TOP" at the top and a red top-left corner reveal any UV flip
+function testTexture(w, h){
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d');
+  const grd = g.createLinearGradient(0, 0, 0, h); grd.addColorStop(0, '#5b8cff'); grd.addColorStop(1, '#ff6ab0');
+  g.fillStyle = grd; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#ff2b2b'; g.fillRect(0, 0, w * 0.18, w * 0.18);
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.font = `bold ${w * 0.16}px system-ui`;
+  g.fillText('TOP', w / 2, h * 0.18); g.fillText('R →', w * 0.75, h / 2);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; return t;
+}
+
+const loader = new GLTFLoader();
+let current = null;
+async function show(entry, btn){
+  document.querySelectorAll('#list button').forEach(b => b.classList.toggle('active', b === btn));
+  if (current) scene.remove(current);
+  const t0 = performance.now();
+  const gltf = await loader.loadAsync(`/local-models/${entry.file}`);
+  current = gltf.scene; scene.add(current);
+  const screenNames = new Set(entry.screens.map(s => s.node));
+  const [sw, sh] = entry.screenSize ?? [1000, 2000];
+  let screens = 0, tris = 0;
+  current.traverse(o => {
+    if (!o.isMesh) return;
+    if (o.material.userData?.rotato?.blendMode === 'add') {   // SceneKit additive screen glass
+      Object.assign(o.material, { blending: THREE.AdditiveBlending, opacity: 1, transparent: true, depthWrite: false });
+    }
+    tris += (o.geometry.index?.count ?? o.geometry.attributes.position.count) / 3;
+    if (screenNames.has(o.name) || screenNames.has(o.parent?.name)) {
+      o.material = new THREE.MeshBasicMaterial({ map: testTexture(Math.min(sw, 1024), Math.round(Math.min(sw, 1024) * sh / sw)), toneMapped: false });
+      screens++;
+    }
+  });
+  const box = new THREE.Box3().setFromObject(current), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+  controls.target.copy(c);
+  camera.position.copy(c).add(new THREE.Vector3(0, 0, size.length() * 1.6));
+  camera.near = size.length() / 100; camera.far = size.length() * 20; camera.updateProjectionMatrix();
+  info.textContent = `${entry.name}\n${(performance.now() - t0).toFixed(0)} ms · ${Math.round(tris).toLocaleString()} triángulos · pantallas marcadas: ${screens}\n` +
+    `tamaño: ${size.toArray().map(v => v.toFixed(3)).join(' × ')} · pantalla: ${entry.screenSize?.join('×') ?? '—'}`;
+  return { screens, tris, size: size.toArray() };
+}
+
+const manifest = await (await fetch('/local-models/manifest.json')).json();
+const list = document.getElementById('list');
+for (const m of manifest.models) {
+  const b = document.createElement('button');
+  b.innerHTML = `${m.thumbnail ? `<img src="/local-models/${m.thumbnail}" alt="">` : ''}<span>${m.name}</span>`;
+  b.onclick = () => show(m, b);
+  list.append(b);
+}
+window.viewer = { manifest, show: name => show(manifest.models.find(m => m.name === name), [...list.children].find(b => b.textContent === name)),
+  loadAll: async () => { const out = []; for (const m of manifest.models) { try { const r = await show(m); out.push([m.name, 'ok', r.screens]); } catch (e) { out.push([m.name, 'ERROR ' + e.message]); } } return out; } };
+show(manifest.models.find(m => /iPhone 15 Pro$/.test(m.name)) ?? manifest.models[0], list.children[0]);
+</script>
+</body>
+</html>

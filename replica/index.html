@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rotato Replica</title>
+</head>
+<body>
+<aside>
+  <h1>Rotato Replica</h1>
+  <div class="proj">
+    <input id="projName" value="Sin título" aria-label="Nombre del proyecto">
+    <div class="row">
+      <button id="newProj" title="Elegir plantilla">Nuevo</button>
+      <button id="openProj" title="Abrir proyecto .json (Ctrl/⌘+O)">Abrir</button>
+      <button id="saveProj" title="Guardar proyecto .json (Ctrl/⌘+S)">Guardar</button>
+    </div>
+    <div class="row">
+      <button id="undo" title="Deshacer (Ctrl/⌘+Z)">↶ Deshacer</button>
+      <button id="redo" title="Rehacer (Ctrl/⌘+Mayús+Z)">↷ Rehacer</button>
+    </div>
+    <div id="projStatus" class="muted"></div>
+    <input id="projFile" type="file" accept=".json,application/json" hidden>
+  </div>
+  <div class="muted" id="presetsHint">Presets decodificados de los <code>.keyframes</code> de Rotato.app. Arrastra una imagen sobre el canvas para ponerla en la pantalla.</div>
+  <div id="presets" style="display:flex;flex-direction:column;gap:4px"></div>
+  <label>FOV <input id="fov" type="range" min="15" max="60" value="30"></label>
+  <label>Escala <input id="scale" type="range" min="0.5" max="2.5" step="0.05" value="1.7"></label>
+  <label>Loop <input id="loop" type="checkbox" checked></label>
+  <fieldset>
+    <legend>Formato y fondo</legend>
+    <label>Formato <select id="format">
+      <option value="16:9">16:9 · YouTube</option>
+      <option value="9:16">9:16 · Reels / TikTok</option>
+      <option value="1:1">1:1 · Cuadrado</option>
+      <option value="4:5">4:5 · Post Instagram</option>
+    </select></label>
+    <label>Fondo <select id="bgType">
+      <option value="color">Color</option>
+      <option value="gradient">Gradiente</option>
+      <option value="image">Imagen</option>
+      <option value="transparent">Transparente</option>
+    </select></label>
+    <div class="sub" id="bgColorRow"><label>Color <input id="bgc" type="color" value="#e9e6ff"></label></div>
+    <div class="sub" id="bgGradientRow" hidden>
+      <label>Colores <span><input id="g1" type="color" value="#6a5cff"> <input id="g2" type="color" value="#ff6ab0"></span></label>
+      <label>Ángulo <input id="gAngle" type="range" min="0" max="360" step="5" value="135"></label>
+      <div class="swatches" id="gPresets"></div>
+    </div>
+    <div class="sub" id="bgImageRow" hidden>
+      <button class="wide" id="bgImageBtn">Elegir imagen…</button>
+      <input id="bgFile" type="file" accept="image/*" hidden>
+    </div>
+    <div class="sub muted" id="bgTransparentRow" hidden>El MP4 no admite transparencia: exporta como PNG o secuencia PNG para conservar el canal alfa.</div>
+  </fieldset>
+  <fieldset>
+    <legend>Apariencia</legend>
+    <label>Entorno <select id="envPreset"></select></label>
+    <label>Intensidad <input id="envIntensity" type="range" min="0" max="3" step="0.05" value="1"></label>
+    <label>Rotación <input id="envRotation" type="range" min="0" max="360" step="5" value="0"></label>
+    <div id="envStatus" class="muted" hidden></div>
+    <label>Carcasa (selección) <input id="caseColor" type="color" value="#ecebe7"></label>
+    <div class="swatches" id="casePresets"></div>
+    <label>Sombra <input id="shadowOn" type="checkbox" checked></label>
+    <label>· Intensidad <input id="shadowIntensity" type="range" min="0" max="1" step="0.05" value="0.35"></label>
+    <label>· Suavidad <input id="shadowSoftness" type="range" min="1" max="30" step="1" value="16"></label>
+    <label>Reflejos pantalla <input id="reflectOn" type="checkbox" checked></label>
+    <label>· Intensidad <input id="reflectIntensity" type="range" min="0" max="1" step="0.02" value="0.18"></label>
+  </fieldset>
+  <fieldset>
+    <legend>Dispositivos</legend>
+    <div class="devlist" id="deviceList"></div>
+    <div class="row2"><button class="wide" id="addDevice">+ Añadir</button><button class="wide" id="dupDevice">Duplicar</button><button class="wide" id="delDevice">Eliminar</button></div>
+    <label>Modelo <select id="devModel"></select></label>
+    <label id="lidRow" hidden>Apertura tapa <input id="lidAngle" type="range" min="60" max="135" step="1" value="110"></label>
+    <label>Animar con keyframes <input id="devAnimate" type="checkbox"></label>
+    <div class="muted">Haz clic en un dispositivo del lienzo para seleccionarlo. Al soltar una imagen o vídeo sobre un dispositivo, va a su pantalla.</div>
+    <label>Vista de edición (V) <input id="editView" type="checkbox"></label>
+    <div class="seg"><button data-mode="translate">Mover (W)</button><button data-mode="rotate" class="active">Rotar (E)</button></div>
+    <div class="xyz">
+      <span></span><b style="color:#ff5d5d">X</b><b style="color:#5dd35d">Y</b><b style="color:#5d8bff">Z</b>
+      <span>Pos</span><input id="px" type="number" step="0.1"><input id="py" type="number" step="0.1"><input id="pz" type="number" step="0.1">
+      <span>Rot°</span><input id="rx" type="number" step="5"><input id="ry" type="number" step="5"><input id="rz" type="number" step="5">
+    </div>
+    <div class="row2"><button class="wide" id="resetDevice" title="Posición y rotación a cero">Restablecer</button><button class="wide" id="centerView" title="Restablece el dispositivo y lo encuadra de frente, centrado (C)">Centrar vista (C)</button></div>
+    <button class="wide" id="mediaBtn">Pantalla: imagen o vídeo…</button>
+    <input id="mediaFile" type="file" accept="image/*,video/*" hidden>
+    <div class="sub" id="videoRow" hidden>
+      <div class="muted" id="videoInfo"></div>
+      <label>Bucle <input id="videoLoop" type="checkbox" checked></label>
+      <label>Sonido en vista previa <input id="videoSound" type="checkbox"></label>
+      <label>Audio en el MP4 <input id="videoAudio" type="checkbox" checked></label>
+      <div class="row2"><button class="wide" id="fitDuration">Duración = vídeo</button><button class="wide" id="removeMedia">Quitar</button></div>
+    </div>
+    <div class="muted">Flechas: mover en un solo eje. Anillos: rotar en X, Y o Z. Arrastrar dentro de la bola: rotación libre. Mayús: ajuste en pasos.</div>
+  </fieldset>
+  <fieldset>
+    <legend>Exportar</legend>
+    <label>Salida <select id="outFormat">
+      <option value="mp4">Vídeo MP4</option>
+      <option value="png">PNG (fotograma actual)</option>
+      <option value="pngseq">Secuencia PNG (ZIP)</option>
+    </select></label>
+    <label>Calidad <select id="quality"><option value="720">720p</option><option value="1080" selected>1080p</option><option value="2160">4K</option></select></label>
+    <div class="muted" id="outSize"></div>
+    <label>FPS <select id="fps"><option>30</option><option selected>60</option></select></label>
+    <label>Supersampling <select id="ss"><option value="1">1×</option><option value="2" selected>2×</option></select></label>
+    <label>Jittering <select id="jitter"><option value="1">off</option><option value="4" selected>4 muestras</option><option value="8">8 muestras</option></select></label>
+    <button id="export">Exportar MP4</button>
+    <div id="exportStatus" class="muted"></div>
+  </fieldset>
+</aside>
+<div id="stage">
+  <div id="viewport"><div id="drop">Suelta la imagen</div><div id="viewHint"></div></div>
+  <div id="timeline">
+    <div class="tl-bar">
+      <button id="play" title="Reproducir / pausa (Espacio)">▶</button>
+      <span class="time"><b id="tcur">0.00</b> / </span><input id="tdur" type="number" step="0.1" min="0.1" title="Duración (s)"><span class="time">s</span>
+      <button id="addKf" title="Guardar la vista actual como keyframe (K)">+ Keyframe</button>
+      <button id="delKf" title="Eliminar keyframe seleccionado (Supr)">Eliminar</button>
+      <button id="fitView" title="Encuadrar todos los dispositivos en la vista actual (F)">Encuadrar todo</button>
+      <span class="spacer"></span>
+      <label>Easing <select id="ease"></select></label>
+      <svg id="curve" viewBox="-4 -10 52 50"><path id="curvePath" fill="none" stroke="#5b8cff" stroke-width="2.5"/></svg>
+    </div>
+    <div id="track"><div id="ruler"></div><div id="playhead"></div></div>
+  </div>
+</div>
+
+<div id="splash" hidden>
+  <div class="splash-card" role="dialog" aria-labelledby="splashTitle">
+    <h2 id="splashTitle">¿Qué quieres presentar?</h2>
+    <p class="muted">Elige un dispositivo para empezar. Podrás añadir más o cambiar de modelo después.</p>
+    <div class="templates">
+      <button class="template" data-type="iphone">
+        <svg viewBox="0 0 120 120" aria-hidden="true"><rect x="40" y="10" width="40" height="100" rx="9" class="t-body"/><rect x="43.5" y="13.5" width="33" height="93" rx="6" class="t-screen"/><rect x="53" y="17" width="14" height="4" rx="2" class="t-body"/></svg>
+        <b>iPhone</b><span class="muted">iPhone 15 Pro · 6,1"</span>
+      </button>
+      <button class="template" data-type="ipad">
+        <svg viewBox="0 0 120 120" aria-hidden="true"><rect x="22" y="12" width="76" height="96" rx="8" class="t-body"/><rect x="27" y="17" width="66" height="86" rx="4" class="t-screen"/></svg>
+        <b>iPad</b><span class="muted">iPad Pro · 11"</span>
+      </button>
+      <button class="template" data-type="macbook">
+        <svg viewBox="0 0 120 120" aria-hidden="true"><rect x="18" y="22" width="84" height="56" rx="4" class="t-body"/><rect x="22" y="26" width="76" height="48" rx="2" class="t-screen"/><path d="M8 84 H112 L106 92 H14 Z" class="t-body"/></svg>
+        <b>MacBook Pro</b><span class="muted">MacBook Pro · 14"</span>
+      </button>
+    </div>
+    <div id="localTemplates" hidden>
+      <div class="local-head"><b>De tus descargas de Rotato</b><span class="muted" id="localCount"></span><input id="localSearch" type="search" placeholder="Buscar modelo…" aria-label="Buscar modelo"></div>
+      <div class="local-grid" id="localGrid"></div>
+      <p class="muted local-note">Convertidos en local con <code>tools/rotato2glb.py</code>. Solo para uso personal.</p>
+    </div>
+    <div id="splashStatus" class="muted"></div>
+    <button id="continueProj" class="continue" hidden></button>
+  </div>
+</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
