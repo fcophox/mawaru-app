@@ -84,6 +84,7 @@ export function renderDeviceList(){
 
 function syncDeviceUI(){
   const dev = selectedDevice();
+  fillModelSelect(dev.type);
   $('devModel').value = dev.type;
   $('lidRow').hidden = !dev.setLidAngle;
   $('lidAngle').value = dev.lidAngle;
@@ -116,12 +117,17 @@ function nextSlot(type){        // to the right of the right-most device, with a
   return box.max.x + half + 0.8;
 }
 
-// Built-in models first, then the ones converted from the user's Rotato downloads (if any)
-export function fillModelSelect(){
-  const opt = k => `<option value="${k}">${MODELS[k].label}</option>`;
-  const builtIn = Object.keys(MODELS).filter(k => !MODELS[k].local);
-  $('devModel').innerHTML = `<optgroup label="Genéricos">${builtIn.map(opt).join('')}</optgroup>`
-    + (localTypes.length ? `<optgroup label="De tus descargas de Rotato">${localTypes.map(opt).join('')}</optgroup>` : '');
+// With models from the user's Rotato downloads the selector offers only those; the built-in
+// models are listed only when there are none (or to show a generic device that is already in use).
+export function fillModelSelect(currentType){
+  const opt = (k, suffix = '') => `<option value="${k}">${MODELS[k].label}${suffix}</option>`;
+  const sel = $('devModel');
+  if (!localTypes.length) {
+    sel.innerHTML = Object.keys(MODELS).filter(k => !MODELS[k].local).map(k => opt(k)).join('');
+    return;
+  }
+  const current = currentType && !MODELS[currentType]?.local ? opt(currentType, ' (genérico)') : '';
+  sel.innerHTML = current + localTypes.map(k => opt(k)).join('');
 }
 
 export function initDevices(){
