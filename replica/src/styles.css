@@ -1,7 +1,8 @@
   :root { --bg:#16171b; --panel:#1f2026; --fg:#e8e8ec; --muted:#8a8b94; --accent:#5b8cff; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--fg); font:13px/1.4 -apple-system,system-ui,sans-serif; display:flex; height:100vh; overflow:hidden; }
-  aside { width:240px; flex:none; background:var(--panel); padding:14px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; overflow-x:hidden; }
+  /* options panel on the right, 20% of the window; the rest is the mockup viewport */
+  aside { order:2; width:20%; min-width:260px; flex:none; border-left:1px solid #2c2d35; background:var(--panel); padding:14px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; overflow-x:hidden; }
   h1 { font-size:14px; margin:0 0 4px; }
   .muted { color:var(--muted); font-size:11px; }
   button.preset { text-align:left; background:#2a2b33; color:var(--fg); border:1px solid transparent; border-radius:6px; padding:7px 9px; cursor:pointer; }
@@ -10,8 +11,8 @@
   #viewport { flex:1; position:relative; min-height:0; background:#0e0f12; overflow:hidden; }
   #viewport canvas { display:block; touch-action:none; position:absolute; box-shadow:0 0 0 1px #ffffff14, 0 10px 40px #0008; }
   #viewport.transparent canvas { background:repeating-conic-gradient(#d9d9de 0 25%, #fff 0 50%) 0 0/20px 20px; }
-  aside label > select { max-width:130px; min-width:0; }
-  aside label > input[type=range] { width:110px; flex:none; }
+  aside label > select { max-width:60%; min-width:0; }
+  aside label > input[type=range] { flex:0 1 160px; min-width:70px; width:auto; }
   aside label { white-space:nowrap; }
   aside label > span { display:flex; gap:4px; }
   .sub { display:flex; flex-direction:column; gap:8px; }
