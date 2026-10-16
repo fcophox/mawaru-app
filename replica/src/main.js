@@ -31,7 +31,7 @@ initExport();
 initProject();
 initSplash();
 // The canvas starts empty: nothing loads until a device is picked on the start screen
-Object.assign(state, { keyframes: [{ t: 0, q: new THREE.Quaternion(), p: new THREE.Vector3(0, 0, 30), ease: 'rotato', devices: {} }],
+Object.assign(state, { keyframes: [{ t: 0, q: new THREE.Quaternion(), p: new THREE.Vector3(0, 0, 30), ease: 'mawaru', devices: {} }],
   duration: 4, selected: 0, playing: false });
 renderTimeline();
 selectDevice(0);

@@ -53,7 +53,7 @@ export async function registerLocalModels(){
     seen.set(label, true);
     const type = 'local:' + e.file;
     MODELS[type] = {
-      local: true, label, subtitle: 'De tus descargas de Rotato', category: categoryOf(label), defaultScale: 1,
+      local: true, label, subtitle: 'Modelo local', category: categoryOf(label), defaultScale: 1,
       caseColor: '#cccccc', file: e.file, thumbnail: e.thumbnail ? BASE + e.thumbnail : null, entry: e, tags: tagsFor(label, e),
       build: caseColor => buildLocal(type, caseColor),
     };

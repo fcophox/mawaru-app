@@ -1,6 +1,6 @@
-# Rotato Replica
+# Mawaru
 
-Editor web de mockups 3D de dispositivos, inspirado en Rotato. Tiene presets de cámara decodificados de Rotato.app, timeline con keyframes, varios dispositivos, fondos, HDRI y exportación a MP4/PNG.
+Editor web de mockups 3D de dispositivos: timeline con keyframes, varios dispositivos, fondos, HDRI y exportación a MP4/PNG.
 
 Al abrirlo aparece una pantalla de inicio para elegir plantilla (iPhone, iPad o MacBook Pro) o continuar el último proyecto. Cada plantilla arranca con un giro suave que encuadra el dispositivo completo. Los modelos son procedurales, con proporciones reales: iPhone 15 Pro, iPad Pro 11" y MacBook Pro 14" con tapa abatible. Se puede cambiar el modelo de cualquier dispositivo y mezclar varios en la misma escena.
 
@@ -40,7 +40,7 @@ src/
     look.js             HDRI, sombra, reflejos, color de carcasa
     frame.js            formato (16:9, 9:16, 1:1, 4:5) y fondo
     media.js            imagen o vídeo en pantalla, sincronizado con el timeline
-    project.js          guardar/abrir .rotato.json, autoguardado, deshacer/rehacer, plantillas
+    project.js          guardar/abrir .mawaru.json, autoguardado, deshacer/rehacer, plantillas
     splash.js           pantalla de inicio: elegir plantilla o continuar
   export/
     exporter.js         render por fotograma (supersampling + jitter) → MP4 / PNG / ZIP

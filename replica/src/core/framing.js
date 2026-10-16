@@ -36,7 +36,7 @@ export function templateKeyframes(type, objects){
     duration: shot.duration,
     keyframes: shot.yaw.map((yaw, i) => {
       const q = rigRotation(shot.pitch, yaw);
-      return { t: i * shot.duration, q, p: frameRig(objects, q), ease: i ? 'easeInOut' : 'rotato', devices: {} };
+      return { t: i * shot.duration, q, p: frameRig(objects, q), ease: i ? 'easeInOut' : 'mawaru', devices: {} };
     }),
   };
 }

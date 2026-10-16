@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Rotato Replica</title>
+<title>Mawaru</title>
 </head>
 <body>
 <aside>
-  <h1>Rotato Replica</h1>
+  <h1>Mawaru</h1>
   <div class="proj">
     <input id="projName" value="Sin título" aria-label="Nombre del proyecto">
     <div class="row">
@@ -22,7 +22,7 @@
     <div id="projStatus" class="muted"></div>
     <input id="projFile" type="file" accept=".json,application/json" hidden>
   </div>
-  <div class="muted" id="presetsHint">Presets decodificados de los <code>.keyframes</code> de Rotato.app. Arrastra una imagen sobre el canvas para ponerla en la pantalla.</div>
+  <div class="muted" id="presetsHint">Presets de cámara. Arrastra una imagen sobre el lienzo para ponerla en la pantalla.</div>
   <div id="presets" style="display:flex;flex-direction:column;gap:4px"></div>
   <label>FOV <input id="fov" type="range" min="15" max="60" value="30"></label>
   <label>Escala <input id="scale" type="range" min="0.5" max="2.5" step="0.05" value="1.7"></label>
@@ -146,10 +146,10 @@
       </button>
     </div>
     <div id="localTemplates" hidden>
-      <div class="local-head"><b>De tus descargas de Rotato</b><span class="muted" id="localCount"></span><input id="localSearch" type="search" placeholder="Buscar modelo…" aria-label="Buscar modelo"></div>
+      <div class="local-head"><b>Tus dispositivos</b><span class="muted" id="localCount"></span><input id="localSearch" type="search" placeholder="Buscar modelo…" aria-label="Buscar modelo"></div>
       <div class="chips" id="localChips" role="toolbar" aria-label="Filtrar por tipo de dispositivo"></div>
       <div class="local-grid" id="localGrid"></div>
-      <p class="muted local-note">Convertidos en local con <code>tools/rotato2glb.py</code>. Solo para uso personal.</p>
+      <p class="muted local-note">Modelos importados en este equipo · solo para uso personal.</p>
     </div>
     <div id="splashStatus" class="muted"></div>
   </div>

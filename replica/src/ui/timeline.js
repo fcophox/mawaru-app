@@ -81,7 +81,7 @@ export function renderTimeline(){
   easeSel.innerHTML = Object.entries(EASES).map(([k, e]) => `<option value="${k}">${e.label}</option>`).join('')
     + (keyframes[selected]?.ease === 'custom' ? '<option value="custom">Preset (bezier)</option>' : '');
   easeSel.disabled = selected < 1;
-  easeSel.value = selected >= 1 ? keyframes[selected].ease : 'rotato';
+  easeSel.value = selected >= 1 ? keyframes[selected].ease : 'mawaru';
   drawCurve();
   updateTimelineState();
 }
@@ -125,7 +125,7 @@ export function addKeyframe(){
   let i = kfAt(state.currentTime);
   if (i >= 0) Object.assign(kfs[i], cam, { devices: { ...kfs[i].devices, ...devPoses } });
   else {
-    kfs.push({ t: state.currentTime, ease: 'rotato', ...cam, devices: devPoses });
+    kfs.push({ t: state.currentTime, ease: 'mawaru', ...cam, devices: devPoses });
     kfs.sort((a, b) => a.t - b.t);
     i = kfs.findIndex(k => k.t === state.currentTime);
   }
@@ -145,7 +145,7 @@ export function deleteKeyframe(){
 
 export function initTimeline(){
   const list = $('presets');
-  if (!presetNames.length) $('presetsHint').innerHTML = 'Sin presets de cámara. Si tienes Rotato.app, ejecuta <code>npm run presets</code> para importarlos (solo en local).';
+  if (!presetNames.length) $('presetsHint').innerHTML = 'Sin presets de cámara importados. Ejecuta <code>npm run presets</code> para añadirlos (solo en local).';
   for (const name of presetNames) {
     const b = document.createElement('button');
     b.className = 'preset'; b.dataset.name = name;

@@ -17,13 +17,14 @@ import { renderTimeline } from './timeline.js';
 // Images and videos are kept out of history snapshots (referenced by id) so undo stays cheap.
 export const projName = $('projName'), projStatus = $('projStatus');
 const MAX_EMBED_VIDEO = 40e6;
-const AUTOSAVE_KEY = 'rotato-replica:autosave';
+const AUTOSAVE_KEY = 'mawaru:autosave';
+const APP_ID = 'mawaru', LEGACY_APP_IDS = ['rotato-replica'];   // older project files keep opening
 const round = (v, d = 5) => +v.toFixed(d);
 let projectReady = false;
 
 export function snapshot(){
   return {
-    app: 'rotato-replica', version: 4, name: projName.value,
+    app: APP_ID, version: 4, name: projName.value,
     timeline: {
       duration: round(state.duration),
       keyframes: state.keyframes.map(k => ({ t: round(k.t, 3), rig: k.q.toArray().map(v => round(v)), camera: k.p.toArray().map(v => round(v)),
@@ -60,7 +61,7 @@ function restore(s){
   const keyframes = s.timeline.keyframes.map(k => ({ t: k.t, q: new THREE.Quaternion().fromArray(k.rig), p: new THREE.Vector3().fromArray(k.camera),
     devices: Object.fromEntries(Object.entries(k.devices ?? {}).map(([uid, x]) =>
       [uid, { p: new THREE.Vector3().fromArray(x.position), q: new THREE.Quaternion().fromArray(x.quaternion), s: x.scale }])),
-    ease: EASES[k.ease] || k.ease === 'custom' ? k.ease : 'rotato', bez: k.bezier }));
+    ease: EASES[k.ease] || k.ease === 'custom' ? k.ease : 'mawaru', bez: k.bezier }));
   if (!keyframes.length) throw new Error('El proyecto no tiene keyframes');
   keyframes.sort((a, b) => a.t - b.t); keyframes[0].t = 0;
   state.keyframes = keyframes;
@@ -142,7 +143,7 @@ export function projectFile(){
 }
 
 export async function loadProject(p){
-  if (p.app !== 'rotato-replica' || !p.timeline) throw new Error('No es un proyecto de Rotato Replica');
+  if (!(p.app === APP_ID || LEGACY_APP_IDS.includes(p.app)) || !p.timeline) throw new Error('No es un proyecto de Mawaru');
   projectReady = true;               // from here on changes are recorded and autosaved
   // models from local-models/ load asynchronously: fetch them before rebuilding the scene
   await Promise.all([...new Set(devicesOf(p).map(d => d.type).filter(isLocal))].map(t => ensureModel(t).catch(() => {})));
@@ -179,7 +180,7 @@ async function saveProject(){
     else note = ' (sin algún vídeo: supera 40 MB)';
   }
   const blob = new Blob([JSON.stringify(file, null, 1)], { type: 'application/json' });
-  const name = (projName.value.trim() || 'proyecto').replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]+/g, '_') + '.rotato.json';
+  const name = (projName.value.trim() || 'proyecto').replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]+/g, '_') + '.mawaru.json';
   Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: name }).click();
   projStatus.textContent = 'Guardado como ' + name + note;
 }
@@ -213,8 +214,8 @@ export async function newProject(type){
   await ensureModel(type);
   const m = MODELS[type];
   await loadProject({
-    app: 'rotato-replica', version: 4, name: `Mockup ${m.label}`,
-    timeline: { duration: 4, keyframes: [{ t: 0, rig: [0, 0, 0, 1], camera: [0, 0, 30], ease: 'rotato' }] },
+    app: APP_ID, version: 4, name: `Mockup ${m.label}`,
+    timeline: { duration: 4, keyframes: [{ t: 0, rig: [0, 0, 0, 1], camera: [0, 0, 30], ease: 'mawaru' }] },
     devices: [{ type, position: [0, 0, 0], rotation: [0, 0, 0], scale: m.defaultScale, caseColor: m.caseColor, lidAngle: 110 }],
     selectedDevice: 0, camera: { fov: 30 }, format: state.format, background: { ...BG_DEFAULTS }, look: { ...LOOK_DEFAULTS },
   });

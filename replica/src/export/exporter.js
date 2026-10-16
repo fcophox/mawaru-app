@@ -73,7 +73,7 @@ async function renderFrames(times, onFrame){
 }
 
 const frameTimes = fps => Array.from({ length: Math.round(state.duration * fps) + 1 }, (_, i) => Math.min(i / fps, state.duration));
-const baseName = () => (projName.value.trim() || 'rotato').replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]+/g, '_') + `-${state.format.replace(':', 'x')}`;
+const baseName = () => (projName.value.trim() || 'mawaru').replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]+/g, '_') + `-${state.format.replace(':', 'x')}`;
 
 export async function exportVideo(){
   if (!('VideoEncoder' in window)) throw new Error('WebCodecs no disponible en este navegador');

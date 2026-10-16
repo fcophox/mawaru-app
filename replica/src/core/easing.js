@@ -11,7 +11,7 @@ export function bezier(c1x, c1y, c2x, c2y){
 
 // The segment that ENDS at keyframe i uses keyframes[i].ease.
 export const EASES = {
-  rotato:    { label: 'Rotato',        v: [0.25, 0.1, 0.25, 1] },
+  mawaru:    { label: 'Mawaru',        v: [0.25, 0.1, 0.25, 1] },   // default curve (CAMediaTimingFunction 0.25,0.1,0.25,1)
   linear:    { label: 'Lineal',        v: [0, 0, 1, 1] },
   easeIn:    { label: 'Ease in',       v: [0.42, 0, 1, 1] },
   easeOut:   { label: 'Ease out',      v: [0, 0, 0.58, 1] },
