@@ -3,7 +3,6 @@
 Editor web de mockups 3D de dispositivos (iPhone, iPad, MacBook…) con animación por keyframes y exportación a vídeo. *Mawaru* (回る) significa «girar» en japonés.
 
 - **`replica/`**: la aplicación (Vite + three.js). Instrucciones, estructura y atajos en [replica/README.md](replica/README.md).
-- **`docs/`**: notas técnicas del desarrollo.
 
 ```bash
 cd replica

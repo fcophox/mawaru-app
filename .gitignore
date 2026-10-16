@@ -10,6 +10,8 @@ dist/
 bin/
 out/
 replica/local-models/
+#  - docs/: technical notes kept only on this machine
+docs/
 
 # local tooling for the reverse-engineering session (REA + Ghidra paths on this machine)
 /package.json
