@@ -17,6 +17,7 @@ function markViewEdited(){
 
 // Keep the current camera angle and move it so every device is fully in frame
 export function fitAll(){
+  if (!devices.length) return;
   markViewEdited();
   state.playing = false;
   camera.quaternion.identity();

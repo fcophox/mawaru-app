@@ -9,6 +9,7 @@ import { applyLook, syncLookUI } from './look.js';
 import { gizmo, syncFields } from './transform.js';
 import { renderTimeline } from './timeline.js';
 import { markChanged } from './project.js';
+import { showSplash } from './splash.js';
 
 // Devices: each one has its own model (iPhone / iPad / MacBook), transform, case colour and screen.
 export const devices = [];
@@ -80,10 +81,13 @@ export function renderDeviceList(){
     deviceListEl.append(b);
   });
   $('delDevice').disabled = devices.length < 2;
+  if (!devices.length) deviceListEl.innerHTML = '<div class="muted">Sin dispositivos. Pulsa «+ Añadir» para elegir uno.</div>';
 }
 
 function syncDeviceUI(){
   const dev = selectedDevice();
+  document.body.classList.toggle('no-device', !dev);
+  if (!dev) return;
   fillModelSelect(dev.type);
   $('devModel').value = dev.type;
   $('lidRow').hidden = !dev.setLidAngle;
@@ -93,8 +97,8 @@ function syncDeviceUI(){
 }
 
 export function selectDevice(i){
-  state.selDevice = THREE.MathUtils.clamp(i, 0, devices.length - 1);
-  gizmo.attach(selectedDevice().group);
+  state.selDevice = THREE.MathUtils.clamp(i, 0, Math.max(devices.length - 1, 0));
+  if (selectedDevice()) gizmo.attach(selectedDevice().group); else gizmo.detach();
   syncDeviceUI(); syncFields(); syncLookUI(); syncVideoUI(); renderDeviceList();
 }
 
@@ -134,11 +138,13 @@ export function initDevices(){
   fillModelSelect();
   $('addDevice').onclick = () => {
     const src = selectedDevice();
+    if (!src) return showSplash({ canCancel: true });      // empty canvas: pick the first device
     createDevice({ type: src.type, position: [nextSlot(src.type), 0, 0], caseColor: src.caseColor });
     applyLook(); selectDevice(devices.length - 1); markChanged();
   };
   $('dupDevice').onclick = () => {
-    const src = selectedDevice(), g = src.group;
+    const src = selectedDevice(); if (!src) return;
+    const g = src.group;
     const dev = createDevice({ type: src.type, position: [nextSlot(src.type), g.position.y, g.position.z], rotation: [g.rotation.x, g.rotation.y, g.rotation.z],
       scale: g.scale.x, caseColor: src.caseColor, lidAngle: src.lidAngle });
     Object.assign(dev.opts, src.opts);
@@ -151,15 +157,17 @@ export function initDevices(){
   };
   $('devModel').onchange = async e => {
     const dev = selectedDevice(), type = e.target.value, sel = e.target;
+    if (!dev) return;
     sel.disabled = true;
     try { await ensureModel(type); setDeviceType(dev, type); markChanged(); }
     catch (err) { console.error(err); }
     finally { sel.disabled = false; selectDevice(state.selDevice); }
   };
-  $('lidAngle').oninput = e => setLidAngle(selectedDevice(), +e.target.value);
+  $('lidAngle').oninput = e => selectedDevice() && setLidAngle(selectedDevice(), +e.target.value);
   $('lidAngle').addEventListener('change', () => markChanged());
   $('devAnimate').onchange = e => {
     const dev = selectedDevice();
+    if (!dev) return;
     if (state.viewDirty) { state.viewDirty = false; apply(state.currentTime); }    // drop unsaved edits first
     if (e.target.checked) {          // start static: every keyframe gets the current pose
       dev.animated = true; dev.base = poseOf(dev.group);
@@ -170,7 +178,7 @@ export function initDevices(){
     }
     renderDeviceList(); renderTimeline(); markChanged();
   };
-  $('scale').oninput = e => selectedDevice().group.scale.setScalar(+e.target.value);
+  $('scale').oninput = e => selectedDevice()?.group.scale.setScalar(+e.target.value);
   $('scale').addEventListener('change', () => markChanged());
 
   let down = null;

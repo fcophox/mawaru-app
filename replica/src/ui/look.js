@@ -98,7 +98,8 @@ export function applyLook(){
 }
 
 function setCaseColor(color){      // case colour of the selected device
-  const d = selectedDevice(); d.caseColor = color; d.setCaseColor(color);
+  const d = selectedDevice(); if (!d) return;
+  d.caseColor = color; d.setCaseColor(color);
   $('caseColor').value = color;
   renderDeviceList();
 }

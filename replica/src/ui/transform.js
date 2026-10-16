@@ -22,7 +22,8 @@ const deg = THREE.MathUtils.radToDeg, rad = THREE.MathUtils.degToRad;
 const fields = { px: ['position', 'x', 1], py: ['position', 'y', 1], pz: ['position', 'z', 1], rx: ['rotation', 'x', 0], ry: ['rotation', 'y', 0], rz: ['rotation', 'z', 0] };
 
 export function syncFields(){
-  const g = selectedDevice().group;
+  const g = selectedDevice()?.group;
+  if (!g) return;
   for (const [id, [prop, axis, isPos]] of Object.entries(fields)) {
     const el = $(id);
     if (document.activeElement === el) continue;
@@ -34,13 +35,14 @@ export function syncFields(){
 // Animated devices are driven by the timeline: an edit holds the current frame until "+ Keyframe"
 export function beginDeviceEdit(){
   state.playing = false;
-  if (selectedDevice().animated && !state.viewDirty) { apply(state.currentTime); state.viewDirty = true; updateTimelineState(); }
+  if (selectedDevice()?.animated && !state.viewDirty) { apply(state.currentTime); state.viewDirty = true; updateTimelineState(); }
 }
 
 // "Centrar vista": undo moves/turns of the selected device and look at it head-on, centred on screen.
 // The camera change is a view edit like orbiting: "+ Keyframe" (K) keeps it in the timeline.
 const FRONT = new THREE.Quaternion();
 export function centerView(){
+  if (!selectedDevice()) return;
   if (!state.viewDirty) { apply(state.currentTime); state.viewDirty = true; }
   state.playing = false;
   const g = selectedDevice().group;
@@ -59,6 +61,7 @@ export function initTransform(){
   for (const [id, [prop, axis, isPos]] of Object.entries(fields)) {
     $(id).addEventListener('input', e => {
       const v = parseFloat(e.target.value); if (Number.isNaN(v)) return;
+      if (!selectedDevice()) return;
       beginDeviceEdit();
       selectedDevice().group[prop][axis] = isPos ? v : rad(v);
     });
@@ -69,6 +72,7 @@ export function initTransform(){
 
   document.querySelectorAll('.seg button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
   $('resetDevice').onclick = () => {
+    if (!selectedDevice()) return;
     beginDeviceEdit();
     const g = selectedDevice().group; g.position.set(0, 0, 0); g.rotation.set(0, 0, 0);
     syncFields(); markChanged();

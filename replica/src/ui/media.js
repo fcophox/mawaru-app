@@ -144,6 +144,7 @@ export function syncVideoUI(){
 }
 
 async function setScreenMedia(file, dev = selectedDevice()){
+  if (!dev) { projStatus.textContent = 'Elige primero un dispositivo.'; return; }
   if (file.type.startsWith('video/')) {
     try { await showVideoId(dev, addVideo(file, file.name)); dev.imageId = null; renderDeviceList(); markChanged(); }
     catch (err) { projStatus.textContent = err.message; }
@@ -166,15 +167,15 @@ export function initMedia(){
   const mediaFile = $('mediaFile');
   $('mediaBtn').onclick = () => mediaFile.click();
   mediaFile.onchange = () => { const f = mediaFile.files[0]; mediaFile.value = ''; if (f) setScreenMedia(f); };
-  $('videoLoop').onchange = e => { selectedDevice().opts.loop = e.target.checked; markChanged(); };
-  $('videoAudio').onchange = e => { selectedDevice().opts.audio = e.target.checked; markChanged(); };
+  $('videoLoop').onchange = e => { if (selectedDevice()) { selectedDevice().opts.loop = e.target.checked; markChanged(); } };
+  $('videoAudio').onchange = e => { if (selectedDevice()) { selectedDevice().opts.audio = e.target.checked; markChanged(); } };
   $('videoSound').onchange = e => { for (const d of devices) if (d.video) d.video.el.muted = !e.target.checked; };
   $('fitDuration').onclick = () => {
-    const v = selectedDevice().video; if (!v) return;
+    const v = selectedDevice()?.video; if (!v) return;
     state.duration = Math.max(v.el.duration, state.keyframes[state.keyframes.length - 1].t);
     renderTimeline(); markChanged();
   };
-  $('removeMedia').onclick = () => { const d = selectedDevice(); stopVideo(d); showImageId(d, null); renderDeviceList(); markChanged(); };
+  $('removeMedia').onclick = () => { const d = selectedDevice(); if (!d) return; stopVideo(d); showImageId(d, null); renderDeviceList(); markChanged(); };
 
   // Drag & drop onto the viewport (Rotato's DragReceiverScnView): media goes to the device under the pointer
   const drop = $('drop');

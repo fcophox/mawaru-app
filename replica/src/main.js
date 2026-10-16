@@ -1,12 +1,11 @@
 import './styles.css';
 import { state, $ } from './state.js';
 import { renderer, scene, rig, camera } from './core/scene.js';
-import { presetNames, loadPresets } from './core/presets.js';
-import { templateKeyframes } from './core/framing.js';
+import { loadPresets } from './core/presets.js';
 import * as THREE from 'three';
 import { apply } from './core/animation.js';
 import { frameRig } from './core/framing.js';
-import { devices, createDevice, selectDevice, selectedDevice, initDevices } from './ui/devices.js';
+import { devices, selectDevice, selectedDevice, initDevices } from './ui/devices.js';
 import { initLook, updateShadowCatcher } from './ui/look.js';
 import { initFrame } from './ui/frame.js';
 import { initTransform, syncFields, editViewEl } from './ui/transform.js';
@@ -21,7 +20,6 @@ import { initExport, exportVideo, exportPNG, exportPNGSequence } from './export/
 // Boot order matters: modules only declare things on import; DOM wiring happens here.
 await registerLocalModels();       // models from local-models/ (only on this machine, if converted)
 await loadPresets();               // Rotato's camera presets, if extracted locally (npm run presets)
-createDevice();
 initLook();
 initFrame();
 initTransform();
@@ -32,12 +30,10 @@ initDevices();
 initExport();
 initProject();
 initSplash();
-if (presetNames.length) setPreset(presetNames[0]);
-else {                             // no local presets: start from the template shot
-  const shot = templateKeyframes('iphone', devices.map(d => d.group));
-  Object.assign(state, { keyframes: shot.keyframes, duration: shot.duration, selected: 1 });
-  renderTimeline();
-}
+// The canvas starts empty: nothing loads until a device is picked on the start screen
+Object.assign(state, { keyframes: [{ t: 0, q: new THREE.Quaternion(), p: new THREE.Vector3(0, 0, 30), ease: 'rotato', devices: {} }],
+  duration: 4, selected: 0, playing: false });
+renderTimeline();
 selectDevice(0);
 startProject();
 showSplash();
@@ -55,7 +51,7 @@ renderer.setAnimationLoop(now => {
     }
   }
   if (!state.viewDirty) apply(state.currentTime);
-  if (editViewEl.checked) {          // neutral front camera that frames the selected device, gizmo centred
+  if (editViewEl.checked && selectedDevice()) {   // neutral front camera that frames the selected device, gizmo centred
     rig.quaternion.identity(); camera.quaternion.identity();
     camera.position.copy(frameRig([selectedDevice().group], IDENTITY, { margin: 1.3 }));
   }
@@ -71,6 +67,6 @@ Object.assign(window, {
   seek: s => { state.playing = false; seekTo(s); },
   setPreset, newProject, showSplash,
   timeline: { get keyframes(){ return state.keyframes; }, get duration(){ return state.duration; }, get currentTime(){ return state.currentTime; } },
-  project: { snapshot, loadProject, projectFile, devices, get screenVideo(){ return selectedDevice().video?.el; }, get history(){ return historyInfo(); } },
+  project: { snapshot, loadProject, projectFile, devices, get screenVideo(){ return selectedDevice()?.video?.el; }, get history(){ return historyInfo(); } },
   exportVideo, exportPNG, exportPNGSequence,
 });

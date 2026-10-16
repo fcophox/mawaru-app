@@ -51,7 +51,7 @@ export function snapshot(){
 
 // v1/v2 files had a single device at the top level
 function devicesOf(s){
-  if (s.devices?.length) return s.devices;
+  if (Array.isArray(s.devices)) return s.devices;          // v3+: may be empty
   return [{ ...(s.device ?? {}), caseColor: s.look?.caseColor ?? '#ecebe7', screenImage: s.screenImage ?? null, screenVideo: s.screenVideo ?? null, video: s.video }];
 }
 
@@ -143,6 +143,7 @@ export function projectFile(){
 
 export async function loadProject(p){
   if (p.app !== 'rotato-replica' || !p.timeline) throw new Error('No es un proyecto de Rotato Replica');
+  projectReady = true;               // from here on changes are recorded and autosaved
   // models from local-models/ load asynchronously: fetch them before rebuilding the scene
   await Promise.all([...new Set(devicesOf(p).map(d => d.type).filter(isLocal))].map(t => ensureModel(t).catch(() => {})));
   for (const [id, url] of Object.entries(p.images ?? {})) images.set(id, url);
@@ -228,8 +229,8 @@ export function savedProject(){
   try { const s = localStorage.getItem(AUTOSAVE_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
 }
 
-// Start recording history; the start screen then picks a template or resumes the autosave
+// History and autosave start with the project picked on the start screen (new or resumed),
+// so opening the app never overwrites the autosave of the last project.
 export function startProject(){
-  projectReady = true;
-  markChanged();
+  projectReady = false;
 }
