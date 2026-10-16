@@ -1,10 +1,8 @@
 import * as THREE from 'three';
 import { easeKey } from './easing.js';
 
-// Camera presets decoded from Rotato.app's .keyframes archives (see docs/rotato-video-render.md).
-// They are Rotato's data, so they are not in the repository: `npm run presets` extracts them from
-// your own Rotato.app into local-models/presets.json (git-ignored). Without them the editor still
-// works with its templates.
+// Camera presets are not in the repository: `npm run presets` imports them locally into
+// local-models/presets.json (git-ignored). Without them the editor works with its templates.
 let PRESETS = {};
 export let presetNames = [];
 

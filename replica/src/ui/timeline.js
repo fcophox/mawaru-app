@@ -8,7 +8,7 @@ import { devices } from './devices.js';
 import { editViewEl } from './transform.js';
 import { markChanged } from './project.js';
 
-// ---- Keyframe timeline (Rotato web: camera keytimes with an easing per segment) ----
+// ---- Keyframe timeline: camera keytimes with an easing per segment ----
 const track = $('track'), ruler = $('ruler');
 export const playhead = $('playhead');
 const playBtn = $('play'), tcur = $('tcur'), tdur = $('tdur');
@@ -22,7 +22,7 @@ const kfAt = t => state.keyframes.findIndex(k => Math.abs(k.t - t) < 0.02);
 
 export function seekTo(t){ state.currentTime = THREE.MathUtils.clamp(t, 0, state.duration); state.viewDirty = false; }
 
-// Rotato's presets orbit the device at the origin and were framed for a phone (~10.5 units tall
+// Camera presets orbit the device at the origin and are framed for a phone (~10.5 units tall
 // at default scale). Devices are now real-sized, so the camera offsets scale with the main device
 // (the one closest to the origin) to keep it whole in the shot.
 const PRESET_REFERENCE_SIZE = 6.2 * 1.7;

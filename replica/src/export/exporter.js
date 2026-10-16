@@ -10,12 +10,11 @@ import { seekVideosExact } from '../ui/media.js';
 import { projName } from '../ui/project.js';
 import { audioSources, pickAudioConfig, encodeAudio } from './audio.js';
 
-// ---- Video export, mirroring Rotato's pipeline (see docs/rotato-video-render.md) ----
-// Rotato: per frame sets sceneTime = i/fps, renders offscreen with SCNRenderer into a larger
-// MSAA target, downscales into the writer's pixel buffer, waits for isReadyForMoreMediaData,
-// then appendPixelBuffer(pts = CMTimeMake(i, fps)). Optional jittering re-renders each frame
-// with sub-pixel camera offsets and averages them (backgroundRendersPerFrame).
-// Here: WebGL render at supersampled size → 2D downscale/accumulate canvas → WebCodecs VideoEncoder → mp4-muxer.
+// ---- Video export ----
+// Each frame is rendered at a fixed time (i / fps), never from the wall clock, at a supersampled size
+// and downscaled into a 2D canvas. Optional jittering re-renders the frame with sub-pixel camera
+// offsets and averages them. Frames go to a WebCodecs VideoEncoder (waiting while its queue is full)
+// with presentation time i / fps, and mp4-muxer writes the file.
 const exportStatus = $('exportStatus');
 
 // Halton(2,3) sub-pixel offsets in [-0.5, 0.5)

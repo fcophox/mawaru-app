@@ -177,7 +177,7 @@ export function initMedia(){
   };
   $('removeMedia').onclick = () => { const d = selectedDevice(); if (!d) return; stopVideo(d); showImageId(d, null); renderDeviceList(); markChanged(); };
 
-  // Drag & drop onto the viewport (Rotato's DragReceiverScnView): media goes to the device under the pointer
+  // Drag & drop onto the viewport: media goes to the device under the pointer
   const drop = $('drop');
   stage.addEventListener('dragover', e => { e.preventDefault(); drop.style.display = 'flex'; });
   stage.addEventListener('dragleave', () => drop.style.display = 'none');

@@ -74,7 +74,7 @@ function renderChips(){
   }
 }
 
-// With models from your Rotato downloads the start screen offers only those; the built-in
+// With imported models the start screen offers only those; the built-in
 // generic templates remain as a fallback when local-models/ is empty (e.g. a fresh clone).
 function renderLocalTemplates(){
   const box = $('localTemplates'), grid = $('localGrid');

@@ -118,7 +118,7 @@ function buildLaptop({ W, LH, LT, BD, BT, R, sw, sh, screenY }){
   };
 }
 
-// Built-in models; models converted from the user's Rotato downloads are added at runtime (core/local-models.js)
+// Built-in models; imported models are added at runtime (core/local-models.js)
 export const MODELS = {
   iphone: {
     category: 'iphone', label: 'iPhone', subtitle: 'iPhone 15 Pro · 6,1"', defaultScale: 1.7, caseColor: '#ecebe7',

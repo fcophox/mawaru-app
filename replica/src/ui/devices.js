@@ -121,7 +121,7 @@ function nextSlot(type){        // to the right of the right-most device, with a
   return box.max.x + half + 0.8;
 }
 
-// With models from the user's Rotato downloads the selector offers only those; the built-in
+// With imported models the selector offers only those; the built-in
 // models are listed only when there are none (or to show a generic device that is already in use).
 export function fillModelSelect(currentType){
   const opt = (k, suffix = '') => `<option value="${k}">${MODELS[k].label}${suffix}</option>`;

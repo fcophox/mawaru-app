@@ -90,7 +90,7 @@ export function applyLook(){
   shadowMat.opacity = look.shadowIntensity; key.shadow.radius = look.shadowSoftness;
   for (const d of devices) {
     for (const g of d.glasses) g.visible = look.reflections;
-    // built-in glass: opacity = strength; Rotato's additive glass is calibrated at 1 for the default strength
+    // built-in glass: opacity = strength; imported additive glass is calibrated at 1 for the default strength
     for (const m of d.glassMats) m.opacity = m.userData.relativeReflection ? Math.min(1, look.reflectionIntensity / LOOK_DEFAULTS.reflectionIntensity) : look.reflectionIntensity;
   }
   hemi.intensity = look.env === 'none' ? 1.4 : 0.25;

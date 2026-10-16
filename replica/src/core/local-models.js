@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MODELS, placeholderTexture, UNITS_PER_CM } from './device-model.js';
 
-// ---- Models converted from the user's own Rotato downloads (tools/rotato2glb.py → local-models/) ----
+// ---- Imported device models (tools/rotato2glb.py → local-models/) ----
 // Personal use only: the folder is git-ignored and only exists on this machine. When it is
 // missing (or in a production build) the editor simply offers the built-in models.
 const BASE = '/local-models/';
@@ -48,7 +48,7 @@ export async function registerLocalModels(){
   const seen = new Map();
   for (const e of manifest.models ?? []) {
     const fromFile = e.source?.replace(/\.rotato$/, '') ?? e.file;
-    let label = e.name && e.name !== 'Scene' ? e.name : fromFile;     // several Rotato scenes are just called "Scene"
+    let label = e.name && e.name !== 'Scene' ? e.name : fromFile;     // several source scenes are just called "Scene"
     if (seen.has(label)) label = fromFile;
     seen.set(label, true);
     const type = 'local:' + e.file;
@@ -79,7 +79,7 @@ export const modelReady = type => !isLocal(type) || templates.has(type);
 
 function prepare(type, root){
   const model = MODELS[type], entry = model.entry;
-  // Rotato's baked "long and smooth" shadow: the editor draws its own
+  // baked shadow meshes: the editor draws its own
   const drop = [];
   root.traverse(o => { if (o.isMesh && (/shadow/i.test(o.name) || /shadow/i.test(o.material?.name ?? ''))) drop.push(o); });
   drop.forEach(o => o.removeFromParent());
@@ -106,7 +106,7 @@ function prepare(type, root){
     if (o.isMesh && !caseColor && colorable.has(o.material?.name)) caseColor = '#' + o.material.color.getHexString();
   });
 
-  // Rotato models are in real centimetres: one shared factor keeps their true relative sizes
+  // imported models are in real centimetres: one shared factor keeps their true relative sizes
   // (and matches the built-in models). Centred on the origin; outer group scale 1 = real size.
   const box = new THREE.Box3().setFromObject(root);
   const center = box.getCenter(new THREE.Vector3());

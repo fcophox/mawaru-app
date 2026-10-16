@@ -10,7 +10,7 @@ renderer.setPixelRatio(devicePixelRatio);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.VSMShadowMap;     // VSM gives the blurred, Rotato-like soft drop shadow
+renderer.shadowMap.type = THREE.VSMShadowMap;     // VSM gives a blurred, soft drop shadow
 stage.prepend(renderer.domElement);
 
 export const scene = new THREE.Scene();
@@ -32,7 +32,7 @@ export const shadowPlane = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), sha
 shadowPlane.position.z = -1.6; shadowPlane.receiveShadow = true;
 scene.add(shadowPlane);
 
-// Camera rig: same structure as Rotato's Keyframe (rigTransform = pivot rotation, povTransform = camera offset inside rig).
+// Camera rig: the rig rotation orbits the scene; the camera offset inside the rig sets distance and framing.
 export const rig = new THREE.Group();
 export const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 2000);
 rig.add(camera);

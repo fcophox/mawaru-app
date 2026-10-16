@@ -3,7 +3,7 @@ import { rig, camera } from './scene.js';
 import { easeFn } from './easing.js';
 import { devices } from '../ui/devices.js';
 
-// Device poses for keyframes (Rotato stores them per keyframe as devicesTransform)
+// Device poses, stored per keyframe
 export const poseOf = g => ({ p: g.position.clone(), q: g.quaternion.clone(), s: g.scale.x });
 export const clonePose = x => ({ p: x.p.clone(), q: x.q.clone(), s: x.s });
 

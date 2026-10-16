@@ -8,7 +8,7 @@ import { selectedDevice } from './devices.js';
 import { updateTimelineState } from './timeline.js';
 import { markChanged } from './project.js';
 
-// ---- Device transform gizmo (Rotato's TransformGizmos equivalent) ----
+// ---- Device transform gizmo ----
 // Per-axis arrows move the device along X/Y/Z only; rings rotate around a single axis;
 // the inner trackball rotates freely.
 export const gizmo = new TransformControls(camera, renderer.domElement);

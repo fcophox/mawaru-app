@@ -19,7 +19,7 @@ import { initExport, exportVideo, exportPNG, exportPNGSequence } from './export/
 
 // Boot order matters: modules only declare things on import; DOM wiring happens here.
 await registerLocalModels();       // models from local-models/ (only on this machine, if converted)
-await loadPresets();               // Rotato's camera presets, if extracted locally (npm run presets)
+await loadPresets();               // camera presets, if imported locally (npm run presets)
 initLook();
 initFrame();
 initTransform();
