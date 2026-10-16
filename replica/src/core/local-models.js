@@ -20,6 +20,24 @@ function categoryOf(name){
   return 'iphone';
 }
 
+// Filter tags for the start screen (a model can have several: an iPhone is also a Phone)
+export const DEVICE_TAGS = ['iphone', 'phone', 'multi', 'generic', 'tablet', 'desktop', 'android', 'laptop', 'watch'];
+function tagsFor(label, entry){
+  const n = label.toLowerCase();
+  const screens = entry.screens.filter(s => /screen/i.test(s.node)).length;
+  if (screens > 1 || /\+| on a |family|flow|toss-up|double|triple/.test(n)) return ['multi'];
+  const t = new Set();
+  if (/watch/.test(n)) t.add('watch');
+  if (/macbook|laptop|surface/.test(n)) t.add('laptop');
+  if (/imac|xdr|\btv\b|monitor/.test(n)) t.add('desktop');
+  if (/ipad|tablet/.test(n)) t.add('tablet');
+  if (/galaxy|samsung s|pixel|^9 pro|android/.test(n)) t.add('android');
+  if (/iphone|pro max notchless/.test(n)) t.add('iphone');
+  if (/generic|universal|clean|glass phone|phone display|infinity/.test(n)) t.add('generic');
+  if (t.has('iphone') || t.has('android') || /phone/.test(n)) t.add('phone');
+  return [...t];
+}
+
 export async function registerLocalModels(){
   let manifest;
   try {
@@ -36,7 +54,7 @@ export async function registerLocalModels(){
     const type = 'local:' + e.file;
     MODELS[type] = {
       local: true, label, subtitle: 'De tus descargas de Rotato', category: categoryOf(label), defaultScale: 1,
-      caseColor: '#cccccc', file: e.file, thumbnail: e.thumbnail ? BASE + e.thumbnail : null, entry: e,
+      caseColor: '#cccccc', file: e.file, thumbnail: e.thumbnail ? BASE + e.thumbnail : null, entry: e, tags: tagsFor(label, e),
       build: caseColor => buildLocal(type, caseColor),
     };
     localTypes.push(type);

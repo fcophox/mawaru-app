@@ -225,10 +225,6 @@ export async function newProject(type){
   projStatus.textContent = `Nuevo proyecto: ${m.label}`;
 }
 
-export function savedProject(){
-  try { const s = localStorage.getItem(AUTOSAVE_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
-}
-
 // History and autosave start with the project picked on the start screen (new or resumed),
 // so opening the app never overwrites the autosave of the last project.
 export function startProject(){
