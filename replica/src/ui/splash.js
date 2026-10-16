@@ -18,7 +18,7 @@ export function showSplash({ canCancel = false } = {}){
   }
   $('splashStatus').textContent = '';
   splash.hidden = false;
-  splash.querySelector('.template').focus();
+  splash.querySelector('.local-item:not([hidden]), .templates:not([hidden]) .template')?.focus();
 }
 
 function hideSplash(){ splash.hidden = true; }
@@ -33,9 +33,13 @@ async function start(action, button){
   finally { busy = false; button?.classList.remove('loading'); }
 }
 
+// With models from your Rotato downloads the start screen offers only those; the built-in
+// generic templates remain as a fallback when local-models/ is empty (e.g. a fresh clone).
 function renderLocalTemplates(){
   const box = $('localTemplates'), grid = $('localGrid');
   box.hidden = !localTypes.length;
+  splash.querySelector('.templates').hidden = localTypes.length > 0;
+  splash.querySelector('.splash-card').classList.toggle('only-local', localTypes.length > 0);
   if (!localTypes.length) return;
   $('localCount').textContent = `(${localTypes.length})`;
   grid.innerHTML = '';

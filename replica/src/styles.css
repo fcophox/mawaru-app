@@ -101,3 +101,6 @@
 #splashStatus { margin-top:8px; }
 .local-item[hidden] { display:none; }
 aside label[hidden] { display:none; }
+.templates[hidden] { display:none; }
+.only-local #localTemplates { margin-top:14px; border-top:0; padding-top:0; }
+.only-local .local-grid { max-height:min(480px, 58vh); }
