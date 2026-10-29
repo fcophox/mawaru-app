@@ -2,7 +2,7 @@
 """Convert Rotato device scenes (.rotato) you have downloaded into glTF binaries (.glb).
 
 For personal, local use only: the models belong to Rotato / their authors. Output goes to
-replica/local-models/, which is git-ignored. Nothing here is published or bundled.
+mawaru/local-models/, which is git-ignored. Nothing here is published or bundled.
 
 A .rotato file is an LZFSE-compressed NSKeyedArchiver plist holding an SCNScene plus Rotato's
 own metadata (keyframes, labels, DeviceSceneMetadata). This tool walks the SceneKit node tree

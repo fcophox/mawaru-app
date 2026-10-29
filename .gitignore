@@ -6,10 +6,10 @@ dist/
 # Rotato's own material: never published
 #  - bin/: binary slices extracted from Rotato.app for analysis
 #  - out/: REA / Ghidra analysis dumps and decompiled pseudocode
-#  - replica/local-models/: models and presets converted from your own Rotato install
+#  - mawaru/local-models/: models and presets converted from your own Rotato install
 bin/
 out/
-replica/local-models/
+mawaru/local-models/
 #  - docs/: technical notes kept only on this machine
 docs/
 
