@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "start": "vite build && node tools/serve.mjs --open",
+    "app": "bash tools/make-app.sh",
     "models": "python3 tools/rotato2glb.py",
     "presets": "python3 tools/extract-presets.py"
   },

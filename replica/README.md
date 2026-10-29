@@ -15,6 +15,19 @@ npm run dev        # http://127.0.0.1:5173
 
 - `npm run build`: genera `dist/` para producción.
 - `npm run preview`: sirve `dist/` en http://127.0.0.1:4173.
+- `npm start`: compila y sirve `dist/` junto con `local-models/` en http://127.0.0.1:4317. Lo abre en una ventana propia de Chrome o, si no está instalado, en el navegador por defecto.
+
+### Como app de Mac
+
+```bash
+npm run app
+```
+
+Crea `~/Applications/Mawaru.app`, que se abre desde Launchpad, Spotlight o el Dock sin usar la terminal:
+- Al abrirla, levanta el servidor de `npm start` en segundo plano. Si las fuentes cambiaron desde la última compilación, recompila antes.
+- Apunta a esta carpeta y al Node con el que se creó. Si mueves el repositorio o cambias de Node, vuelve a ejecutar `npm run app`.
+- El registro está en `~/Library/Logs/Mawaru.log`.
+- El servidor sigue activo hasta cerrar sesión. Para pararlo: `pkill -f tools/serve.mjs`.
 
 La exportación de vídeo usa WebCodecs, que solo funciona en un contexto seguro (`localhost`/`127.0.0.1` o HTTPS) y en navegadores Chromium.
 
