@@ -15,11 +15,13 @@ import { initMedia, syncVideoPreview } from './ui/media.js';
 import { initProject, startProject, newProject, snapshot, loadProject, projectFile, historyInfo } from './ui/project.js';
 import { initSplash, showSplash } from './ui/splash.js';
 import { registerLocalModels } from './core/local-models.js';
+import { initTabs } from './ui/tabs.js';
 import { initExport, exportVideo, exportPNG, exportPNGSequence } from './export/exporter.js';
 
 // Boot order matters: modules only declare things on import; DOM wiring happens here.
 await registerLocalModels();       // models from local-models/ (only on this machine, if converted)
 await loadPresets();               // camera presets, if imported locally (npm run presets)
+initTabs();
 initLook();
 initFrame();
 initTransform();

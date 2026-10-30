@@ -22,53 +22,14 @@
     <div id="projStatus" class="muted"></div>
     <input id="projFile" type="file" accept=".json,application/json" hidden>
   </div>
-  <div class="muted" id="presetsHint">Presets de cámara. Arrastra una imagen sobre el lienzo para ponerla en la pantalla.</div>
-  <div id="presets" style="display:flex;flex-direction:column;gap:4px"></div>
-  <label>FOV <input id="fov" type="range" min="15" max="60" value="30"></label>
-  <label>Escala <input id="scale" type="range" min="0.5" max="2.5" step="0.05" value="1.7"></label>
-  <label>Loop <input id="loop" type="checkbox" checked></label>
-  <fieldset>
-    <legend>Formato y fondo</legend>
-    <label>Formato <select id="format">
-      <option value="16:9">16:9 · YouTube</option>
-      <option value="9:16">9:16 · Reels / TikTok</option>
-      <option value="1:1">1:1 · Cuadrado</option>
-      <option value="4:5">4:5 · Post Instagram</option>
-    </select></label>
-    <label>Fondo <select id="bgType">
-      <option value="color">Color</option>
-      <option value="gradient">Gradiente</option>
-      <option value="image">Imagen</option>
-      <option value="transparent">Transparente</option>
-    </select></label>
-    <div class="sub" id="bgColorRow"><label>Color <input id="bgc" type="color" value="#e9e6ff"></label></div>
-    <div class="sub" id="bgGradientRow" hidden>
-      <label>Colores <span><input id="g1" type="color" value="#6a5cff"> <input id="g2" type="color" value="#ff6ab0"></span></label>
-      <label>Ángulo <input id="gAngle" type="range" min="0" max="360" step="5" value="135"></label>
-      <div class="swatches" id="gPresets"></div>
-    </div>
-    <div class="sub" id="bgImageRow" hidden>
-      <button class="wide" id="bgImageBtn">Elegir imagen…</button>
-      <input id="bgFile" type="file" accept="image/*" hidden>
-    </div>
-    <div class="sub muted" id="bgTransparentRow" hidden>El MP4 no admite transparencia: exporta como PNG o secuencia PNG para conservar el canal alfa.</div>
-  </fieldset>
-  <fieldset>
-    <legend>Apariencia</legend>
-    <label>Entorno <select id="envPreset"></select></label>
-    <label>Intensidad <input id="envIntensity" type="range" min="0" max="3" step="0.05" value="1"></label>
-    <label>Rotación <input id="envRotation" type="range" min="0" max="360" step="5" value="0"></label>
-    <div id="envStatus" class="muted" hidden></div>
-    <label>Carcasa (selección) <input id="caseColor" type="color" value="#ecebe7"></label>
-    <div class="swatches" id="casePresets"></div>
-    <label>Sombra <input id="shadowOn" type="checkbox" checked></label>
-    <label>· Intensidad <input id="shadowIntensity" type="range" min="0" max="1" step="0.05" value="0.35"></label>
-    <label>· Suavidad <input id="shadowSoftness" type="range" min="1" max="30" step="1" value="16"></label>
-    <label>Reflejos pantalla <input id="reflectOn" type="checkbox" checked></label>
-    <label>· Intensidad <input id="reflectIntensity" type="range" min="0" max="1" step="0.02" value="0.18"></label>
-  </fieldset>
-  <fieldset>
-    <legend>Dispositivos</legend>
+  <div class="tabs" id="sideTabs" role="tablist" aria-label="Opciones">
+    <button class="tab active" id="tab-devices" role="tab" aria-controls="panel-devices" aria-selected="true">Dispositivos</button>
+    <button class="tab" id="tab-format" role="tab" aria-controls="panel-format" aria-selected="false" tabindex="-1">Formato y fondo</button>
+    <button class="tab" id="tab-look" role="tab" aria-controls="panel-look" aria-selected="false" tabindex="-1">Apariencia</button>
+    <button class="tab" id="tab-camera" role="tab" aria-controls="panel-camera" aria-selected="false" tabindex="-1">Presets de cámara</button>
+    <button class="tab" id="tab-export" role="tab" aria-controls="panel-export" aria-selected="false" tabindex="-1">Exportar</button>
+  </div>
+  <section class="tabpanel" id="panel-devices" role="tabpanel" aria-labelledby="tab-devices" tabindex="0">
     <div class="devlist" id="deviceList"></div>
     <div class="row2"><button class="wide" id="addDevice">+ Añadir</button><button class="wide" id="dupDevice">Duplicar</button><button class="wide" id="delDevice">Eliminar</button></div>
     <label>Modelo <select id="devModel"></select></label>
@@ -93,9 +54,53 @@
       <div class="row2"><button class="wide" id="fitDuration">Duración = vídeo</button><button class="wide" id="removeMedia">Quitar</button></div>
     </div>
     <div class="muted">Flechas: mover en un solo eje. Anillos: rotar en X, Y o Z. Arrastrar dentro de la bola: rotación libre. Mayús: ajuste en pasos.</div>
-  </fieldset>
-  <fieldset>
-    <legend>Exportar</legend>
+  </section>
+  <section class="tabpanel" id="panel-format" role="tabpanel" aria-labelledby="tab-format" tabindex="0" hidden>
+    <label>Formato <select id="format">
+      <option value="16:9">16:9 · YouTube</option>
+      <option value="9:16">9:16 · Reels / TikTok</option>
+      <option value="1:1">1:1 · Cuadrado</option>
+      <option value="4:5">4:5 · Post Instagram</option>
+    </select></label>
+    <label>Fondo <select id="bgType">
+      <option value="color">Color</option>
+      <option value="gradient">Gradiente</option>
+      <option value="image">Imagen</option>
+      <option value="transparent">Transparente</option>
+    </select></label>
+    <div class="sub" id="bgColorRow"><label>Color <input id="bgc" type="color" value="#e9e6ff"></label></div>
+    <div class="sub" id="bgGradientRow" hidden>
+      <label>Colores <span><input id="g1" type="color" value="#6a5cff"> <input id="g2" type="color" value="#ff6ab0"></span></label>
+      <label>Ángulo <input id="gAngle" type="range" min="0" max="360" step="5" value="135"></label>
+      <div class="swatches" id="gPresets"></div>
+    </div>
+    <div class="sub" id="bgImageRow" hidden>
+      <button class="wide" id="bgImageBtn">Elegir imagen…</button>
+      <input id="bgFile" type="file" accept="image/*" hidden>
+    </div>
+    <div class="sub muted" id="bgTransparentRow" hidden>El MP4 no admite transparencia: exporta como PNG o secuencia PNG para conservar el canal alfa.</div>
+  </section>
+  <section class="tabpanel" id="panel-look" role="tabpanel" aria-labelledby="tab-look" tabindex="0" hidden>
+    <label>Entorno <select id="envPreset"></select></label>
+    <label>Intensidad <input id="envIntensity" type="range" min="0" max="3" step="0.05" value="1"></label>
+    <label>Rotación <input id="envRotation" type="range" min="0" max="360" step="5" value="0"></label>
+    <div id="envStatus" class="muted" hidden></div>
+    <label>Carcasa (selección) <input id="caseColor" type="color" value="#ecebe7"></label>
+    <div class="swatches" id="casePresets"></div>
+    <label>Sombra <input id="shadowOn" type="checkbox" checked></label>
+    <label>· Intensidad <input id="shadowIntensity" type="range" min="0" max="1" step="0.05" value="0.35"></label>
+    <label>· Suavidad <input id="shadowSoftness" type="range" min="1" max="30" step="1" value="16"></label>
+    <label>Reflejos pantalla <input id="reflectOn" type="checkbox" checked></label>
+    <label>· Intensidad <input id="reflectIntensity" type="range" min="0" max="1" step="0.02" value="0.18"></label>
+  </section>
+  <section class="tabpanel" id="panel-camera" role="tabpanel" aria-labelledby="tab-camera" tabindex="0" hidden>
+    <div class="muted" id="presetsHint">Arrastra una imagen sobre el lienzo para ponerla en la pantalla.</div>
+    <div id="presets" style="display:flex;flex-direction:column;gap:4px"></div>
+    <label>FOV <input id="fov" type="range" min="15" max="60" value="30"></label>
+    <label>Escala <input id="scale" type="range" min="0.5" max="2.5" step="0.05" value="1.7"></label>
+    <label>Loop <input id="loop" type="checkbox" checked></label>
+  </section>
+  <section class="tabpanel" id="panel-export" role="tabpanel" aria-labelledby="tab-export" tabindex="0" hidden>
     <label>Salida <select id="outFormat">
       <option value="mp4">Vídeo MP4</option>
       <option value="png">PNG (fotograma actual)</option>
@@ -108,7 +113,7 @@
     <label>Jittering <select id="jitter"><option value="1">off</option><option value="4" selected>4 muestras</option><option value="8">8 muestras</option></select></label>
     <button id="export">Exportar MP4</button>
     <div id="exportStatus" class="muted"></div>
-  </fieldset>
+  </section>
 </aside>
 <div id="stage">
   <div id="viewport"><div id="drop">Suelta la imagen</div><div id="viewHint"></div></div>
