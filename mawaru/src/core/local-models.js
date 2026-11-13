@@ -106,7 +106,11 @@ function prepare(type, root){
   const colorable = new Set(entry.colorableMaterials);
   let caseColor = null;
   root.traverse(o => {
-    if (o.isMesh && !caseColor && colorable.has(o.material?.name)) caseColor = '#' + o.material.color.getHexString();
+    if (!o.isMesh) return;
+    if (!caseColor && colorable.has(o.material?.name)) caseColor = '#' + o.material.color.getHexString();
+    // shadows from both faces: three only uses back faces by default, so a single-sided back
+    // panel facing the light (iPhone 15) cast nothing and the shadow was just the frame's outline
+    if (o.material) o.material.shadowSide = THREE.DoubleSide;
   });
 
   // imported models are in real centimetres: one shared factor keeps their true relative sizes
@@ -143,7 +147,10 @@ function buildLocal(type, caseColor){
     if (t.colorable.has(src.name)) {
       if (!caseMats.has(src)) { const m = src.clone(); m.color.set(caseColor); caseMats.set(src, m); materials.push(m); }
       o.material = caseMats.get(src);
-    } else if (src.userData?.rotato?.blendMode === 'add') {    // SceneKit additive screen glass
+    } else if (src.userData?.rotato?.blendMode === 'add'
+      // Rotato's screen glass is always an additive reflection layer, but some conversions lost the
+      // blend mode (iPhone 13, S21, Surface…): drawn as normal alpha, its ~45 % grey texture dimmed the screen
+      || (src.transparent && /^glass_screen/i.test(src.name))) {    // SceneKit additive screen glass
       const m = src.clone();
       Object.assign(m, { blending: THREE.AdditiveBlending, opacity: 1, transparent: true, depthWrite: false });
       m.userData.relativeReflection = true;

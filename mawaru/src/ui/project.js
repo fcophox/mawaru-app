@@ -7,10 +7,11 @@ import { MODELS } from '../core/device-model.js';
 import { templateKeyframes } from '../core/framing.js';
 import { isLocal, ensureModel, modelReady } from '../core/local-models.js';
 import { devices, createDevice, disposeDevice, selectDevice, setDeviceType, setLidAngle } from './devices.js';
-import { images, videos, showImageId, showVideoId, stopVideo, blobToDataURL, dataURLToBlob } from './media.js';
+import { images, videos, showImageId, showVideoId, stopVideo, setScreenScroll, blobToDataURL, dataURLToBlob } from './media.js';
 import { look, LOOK_DEFAULTS, ENVIRONMENTS, applyLook, applyEnvironment } from './look.js';
 import { bg, BG_DEFAULTS, FORMATS, applyBackground, setFormat } from './frame.js';
 import { renderTimeline } from './timeline.js';
+import { scenesFileData, sceneImageIds, setScenesFromFile, sceneChanged, syncSceneDevices } from './scenes.js';
 
 // ---- Project: save / open (.json), autosave, undo / redo ----
 // One snapshot format feeds the JSON file, the local autosave and the undo history.
@@ -40,7 +41,7 @@ export function snapshot(){
         position: p.toArray().map(v => round(v)),
         rotation: [e.x, e.y, e.z].map(v => round(v)),
         scale: round(s, 3), caseColor: d.caseColor,
-        screenImage: d.imageId, screenVideo: d.videoId, video: { ...d.opts } };
+        screenImage: d.imageId, screenVideo: d.videoId, screenScroll: round(d.screenScroll ?? 0, 4), video: { ...d.opts } };
     }),
     selectedDevice: state.selDevice,
     camera: { fov: camera.fov },
@@ -72,6 +73,7 @@ function restore(s){
   while (devices.length > list.length) disposeDevice(devices[devices.length - 1]);
   while (devices.length < list.length) createDevice();
   let missingVideo = false;
+  const pending = [];                // screen textures: callers that render right away (scenes) wait for them
   list.forEach((sd, i) => {
     // a local model that is not on this machine (or failed to load) falls back to the built-in iPhone
     const d = devices[i], type = MODELS[sd.type] && modelReady(sd.type) ? sd.type : 'iphone';
@@ -83,15 +85,17 @@ function restore(s){
     d.animated = !!sd.animated; d.base = d.animated ? poseOf(d.group) : null;
     d.caseColor = sd.caseColor ?? MODELS[type].caseColor; d.setCaseColor(d.caseColor);
     Object.assign(d.opts, { loop: true, audio: true }, sd.video ?? {});
+    d.screenScroll = sd.screenScroll ?? 0;          // per device: never shared with the other devices or scenes
     const wantVideo = sd.screenVideo && videos.has(sd.screenVideo) ? sd.screenVideo : null;
     if (sd.screenVideo && !wantVideo) missingVideo = true;
-    if (wantVideo) { if (wantVideo !== d.videoId) showVideoId(d, wantVideo); }
+    if (wantVideo) { if (wantVideo !== d.videoId) pending.push(showVideoId(d, wantVideo).catch(() => {})); }
     else {
       const hadVideo = !!d.video; stopVideo(d);
       const wantImage = sd.screenImage && images.has(sd.screenImage) ? sd.screenImage : null;
-      if (hadVideo || wantImage !== d.imageId || d.imageId === undefined) showImageId(d, wantImage);
+      if (hadVideo || wantImage !== d.imageId || d.imageId === undefined) pending.push(showImageId(d, wantImage).catch(() => {}));
     }
   });
+  for (const d of devices) setScreenScroll(d, d.screenScroll);   // screens whose media was kept: re-crop
   if (missingVideo) projStatus.textContent = 'Algún vídeo de pantalla no está guardado aquí: vuelve a elegirlo.';
 
   camera.fov = s.camera.fov; camera.updateProjectionMatrix(); $('fov').value = s.camera.fov;
@@ -104,7 +108,7 @@ function restore(s){
   delete look.caseColor;                                   // now per device
   if (!ENVIRONMENTS[look.env]) look.env = 'room';
   applyLook(); if (look.env !== prevEnv || !scene.environment) applyEnvironment();
-  applyBackground();
+  pending.push(applyBackground());
 
   state.selected = Math.min(state.selected, keyframes.length - 1);
   state.currentTime = Math.min(state.currentTime, state.duration);
@@ -112,6 +116,7 @@ function restore(s){
   document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
   selectDevice(s.selectedDevice ?? 0);
   renderTimeline();
+  return Promise.all(pending);
 }
 
 // history holds JSON strings so equal states are cheap to detect
@@ -120,29 +125,32 @@ export const historyInfo = () => ({ length: history.length, index: historyIndex 
 
 export function markChanged(){
   if (!projectReady) return;
+  syncSceneDevices();                // scenes with «Mismo estilo»: one device's edit applies to all of them
   const s = JSON.stringify(snapshot());
   if (s === history[historyIndex]) return;
   history = history.slice(0, historyIndex + 1); history.push(s);
   if (history.length > 100) history.shift();
   historyIndex = history.length - 1;
-  updateHistoryButtons(); scheduleAutosave();
+  updateHistoryButtons(); scheduleAutosave(); sceneChanged();
 }
 function stepHistory(dir){
   const i = historyIndex + dir;
   if (i < 0 || i >= history.length) return;
   historyIndex = i; restore(JSON.parse(history[i]));
-  updateHistoryButtons(); scheduleAutosave();
+  updateHistoryButtons(); scheduleAutosave(); sceneChanged();
 }
 function updateHistoryButtons(){ $('undo').disabled = historyIndex <= 0; $('redo').disabled = historyIndex >= history.length - 1; }
 
 // A saved file embeds the images it uses so it opens anywhere
+// With scenes, the file is the active scene plus every scene's snapshot (and all their images).
 export function projectFile(){
-  const s = snapshot();
-  const used = [...s.devices.map(d => d.screenImage), s.background.imageId].filter(id => id && images.has(id));
-  return { ...s, images: Object.fromEntries(used.map(id => [id, images.get(id)])) };
+  const s = snapshot(), sc = scenesFileData();
+  const used = [...new Set([...s.devices.map(d => d.screenImage), s.background.imageId, ...(sc ? sceneImageIds() : [])])].filter(id => id && images.has(id));
+  return { ...s, ...(sc ?? {}), images: Object.fromEntries(used.map(id => [id, images.get(id)])) };
 }
 
-export async function loadProject(p){
+// keepScenes: switching between the scenes of the open presentation (its scene list stays as is)
+export async function loadProject(p, { keepScenes = false } = {}){
   if (!(p.app === APP_ID || LEGACY_APP_IDS.includes(p.app)) || !p.timeline) throw new Error('No es un proyecto de Mawaru');
   projectReady = true;               // from here on changes are recorded and autosaved
   // models from local-models/ load asynchronously: fetch them before rebuilding the scene
@@ -151,7 +159,8 @@ export async function loadProject(p){
   for (const [id, v] of Object.entries(p.videos ?? {})) if (!videos.has(id)) videos.set(id, { blob: dataURLToBlob(v.dataURL), name: v.name, url: null });
   for (const v of videos.values()) v.url ??= URL.createObjectURL(v.blob);
   for (const d of devices) d.imageId = undefined;   // force the screens to refresh
-  restore(p); state.currentTime = 0;
+  await restore(p); state.currentTime = 0;
+  if (!keepScenes) setScenesFromFile(p);
   history = []; historyIndex = -1; markChanged();
 }
 
@@ -162,7 +171,7 @@ function scheduleAutosave(){
     try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(projectFile())); projStatus.textContent = 'Autoguardado ' + new Date().toLocaleTimeString(); }
     catch { // quota (large image) or storage blocked: keep the project without its images
       try {
-        const s = snapshot();
+        const s = snapshot();      // (scenes are not kept either: only a saved file holds them all)
         localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ ...s, devices: s.devices.map(d => ({ ...d, screenImage: null })), background: { ...s.background, imageId: null }, images: {} }));
         projStatus.textContent = 'Autoguardado (sin imagen: demasiado grande)';
       } catch { projStatus.textContent = 'Autoguardado no disponible'; }

@@ -31,7 +31,7 @@ export function createDevice({ type = 'iphone', position = [0, 0, 0], rotation =
   const model = MODELS[type];
   caseColor ??= model.caseColor;
   const dev = { uid: 'd' + Math.random().toString(36).slice(2, 8), type, lidAngle, animated: false, base: null, caseColor,
-    imageId: null, videoId: null, video: null, opts: { loop: true, audio: true } };
+    imageId: null, videoId: null, video: null, screenScroll: 0, opts: { loop: true, audio: true } };
   attachMesh(dev, buildDeviceMesh(type, caseColor));
   dev.group.position.fromArray(position); dev.group.rotation.set(...rotation); dev.group.scale.setScalar(scale ?? model.defaultScale);
   devices.push(dev);
@@ -138,7 +138,7 @@ export function initDevices(){
   fillModelSelect();
   $('addDevice').onclick = () => {
     const src = selectedDevice();
-    if (!src) return showSplash({ canCancel: true });      // empty canvas: pick the first device
+    if (!src) return showSplash({ canCancel: true, mode: 'devices' });      // empty canvas: pick the first device
     createDevice({ type: src.type, position: [nextSlot(src.type), 0, 0], caseColor: src.caseColor });
     applyLook(); selectDevice(devices.length - 1); markChanged();
   };
@@ -148,6 +148,7 @@ export function initDevices(){
     const dev = createDevice({ type: src.type, position: [nextSlot(src.type), g.position.y, g.position.z], rotation: [g.rotation.x, g.rotation.y, g.rotation.z],
       scale: g.scale.x, caseColor: src.caseColor, lidAngle: src.lidAngle });
     Object.assign(dev.opts, src.opts);
+    dev.screenScroll = src.screenScroll;
     if (src.videoId) showVideoId(dev, src.videoId); else showImageId(dev, src.imageId);
     applyLook(); selectDevice(devices.length - 1); markChanged();
   };

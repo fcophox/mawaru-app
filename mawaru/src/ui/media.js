@@ -39,8 +39,9 @@ export function showImageId(dev, id){
   return new THREE.TextureLoader().loadAsync(images.get(dev.imageId)).then(tex => {
     if (dev.imageId !== id || dev.video) { tex.dispose(); return; }     // replaced while loading
     tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
-    coverUV(tex, tex.image.width / tex.image.height, dev.screenAspect);
+    coverUV(tex, tex.image.width / tex.image.height, dev.screenAspect, dev.screenScroll);
     dev.screenMat.map = tex; dev.screenMat.needsUpdate = true;
+    if (dev === selectedDevice()) syncScrollUI();
   });
 }
 
@@ -48,7 +49,7 @@ export function showImageId(dev, id){
 export function refitScreen(dev){
   if (dev.video) {
     const { el, tex } = dev.video;
-    coverUV(tex, el.videoWidth / el.videoHeight, dev.screenAspect);
+    coverUV(tex, el.videoWidth / el.videoHeight, dev.screenAspect, dev.screenScroll);
     dev.screenMat.map = tex; dev.screenMat.needsUpdate = true;
   } else showImageId(dev, dev.imageId);
 }
@@ -56,10 +57,31 @@ export function refitScreen(dev){
 // ---- Video on the device screens ----
 // Preview: each <video> follows the timeline clock (play/pause/scrub, drift-corrected).
 // Export: every output frame seeks each video to its exact time before rendering (seekVideosExact).
-function coverUV(tex, ia, fa){     // crop like CSS object-fit: cover
+// Crop like CSS object-fit: cover. A design taller than the screen is anchored at its TOP (like
+// a scrolled-to-top app screen); scroll 0…1 moves the visible window down to its bottom.
+// Wider media stays centred. Texture v runs bottom → top, so the top window is offset 1 − repeat.
+export function coverUV(tex, ia, fa, scroll = 0){
   tex.repeat.set(1, 1); tex.offset.set(0, 0);
   if (ia > fa) { tex.repeat.x = fa / ia; tex.offset.x = (1 - tex.repeat.x) / 2; }
-  else { tex.repeat.y = ia / fa; tex.offset.y = (1 - tex.repeat.y) / 2; }
+  else { tex.repeat.y = ia / fa; tex.offset.y = (1 - tex.repeat.y) * (1 - THREE.MathUtils.clamp(scroll, 0, 1)); }
+}
+
+// ---- Screen scroll: per device, for designs taller than the screen ----
+const mediaAspect = dev => dev.video ? dev.video.el.videoWidth / dev.video.el.videoHeight
+  : dev.imageId && dev.screenMat.map?.image?.width ? dev.screenMat.map.image.width / dev.screenMat.map.image.height : null;
+export const screenOverflows = dev => { const ia = mediaAspect(dev); return !!ia && ia < dev.screenAspect - 1e-3; };
+
+export function setScreenScroll(dev, v){
+  dev.screenScroll = THREE.MathUtils.clamp(+v || 0, 0, 1);
+  const ia = mediaAspect(dev);
+  if (ia) coverUV(dev.screenMat.map, ia, dev.screenAspect, dev.screenScroll);
+  if (dev === selectedDevice()) syncScrollUI();
+}
+
+export function syncScrollUI(){
+  const dev = selectedDevice();
+  $('scrollRow').hidden = !dev || !screenOverflows(dev);
+  if (dev) $('screenScroll').value = dev.screenScroll ?? 0;
 }
 
 export function addVideo(blob, name){
@@ -87,7 +109,7 @@ export async function showVideoId(dev, id){
   if (dev.videoId !== id || !devices.includes(dev)) { el.removeAttribute('src'); return; }   // replaced while loading
   const tex = new THREE.VideoTexture(el);
   tex.colorSpace = THREE.SRGBColorSpace;
-  coverUV(tex, el.videoWidth / el.videoHeight, dev.screenAspect);
+  coverUV(tex, el.videoWidth / el.videoHeight, dev.screenAspect, dev.screenScroll);
   dev.video = { el, tex };
   dev.screenMat.map = tex; dev.screenMat.needsUpdate = true;
   if (dev === selectedDevice()) syncVideoUI();
@@ -133,6 +155,7 @@ export async function seekVideosExact(t){
 }
 
 export function syncVideoUI(){
+  syncScrollUI();
   const dev = selectedDevice();
   $('videoRow').hidden = !dev?.video;
   if (!dev) return;
@@ -145,6 +168,7 @@ export function syncVideoUI(){
 
 async function setScreenMedia(file, dev = selectedDevice()){
   if (!dev) { projStatus.textContent = 'Elige primero un dispositivo.'; return; }
+  dev.screenScroll = 0;              // a new design starts at its top
   if (file.type.startsWith('video/')) {
     try { await showVideoId(dev, addVideo(file, file.name)); dev.imageId = null; renderDeviceList(); markChanged(); }
     catch (err) { projStatus.textContent = err.message; }
@@ -175,6 +199,8 @@ export function initMedia(){
     state.duration = Math.max(v.el.duration, state.keyframes[state.keyframes.length - 1].t);
     renderTimeline(); markChanged();
   };
+  $('screenScroll').oninput = e => { const d = selectedDevice(); if (d) setScreenScroll(d, e.target.value); };
+  $('screenScroll').addEventListener('change', () => markChanged());
   $('removeMedia').onclick = () => { const d = selectedDevice(); if (!d) return; stopVideo(d); showImageId(d, null); renderDeviceList(); markChanged(); };
 
   // Drag & drop onto the viewport: media goes to the device under the pointer
