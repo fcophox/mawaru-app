@@ -7,7 +7,7 @@ import { MODELS } from '../core/device-model.js';
 import { templateKeyframes } from '../core/framing.js';
 import { isLocal, ensureModel, modelReady } from '../core/local-models.js';
 import { devices, createDevice, disposeDevice, selectDevice, setDeviceType, setLidAngle } from './devices.js';
-import { images, videos, showImageId, showVideoId, stopVideo, blobToDataURL, dataURLToBlob } from './media.js';
+import { images, videos, showImageId, showVideoId, stopVideo, setScreenScroll, blobToDataURL, dataURLToBlob } from './media.js';
 import { look, LOOK_DEFAULTS, ENVIRONMENTS, applyLook, applyEnvironment } from './look.js';
 import { bg, BG_DEFAULTS, FORMATS, applyBackground, setFormat } from './frame.js';
 import { renderTimeline } from './timeline.js';
@@ -41,7 +41,7 @@ export function snapshot(){
         position: p.toArray().map(v => round(v)),
         rotation: [e.x, e.y, e.z].map(v => round(v)),
         scale: round(s, 3), caseColor: d.caseColor,
-        screenImage: d.imageId, screenVideo: d.videoId, video: { ...d.opts } };
+        screenImage: d.imageId, screenVideo: d.videoId, screenScroll: round(d.screenScroll ?? 0, 4), video: { ...d.opts } };
     }),
     selectedDevice: state.selDevice,
     camera: { fov: camera.fov },
@@ -85,6 +85,7 @@ function restore(s){
     d.animated = !!sd.animated; d.base = d.animated ? poseOf(d.group) : null;
     d.caseColor = sd.caseColor ?? MODELS[type].caseColor; d.setCaseColor(d.caseColor);
     Object.assign(d.opts, { loop: true, audio: true }, sd.video ?? {});
+    d.screenScroll = sd.screenScroll ?? 0;          // per device: never shared with the other devices or scenes
     const wantVideo = sd.screenVideo && videos.has(sd.screenVideo) ? sd.screenVideo : null;
     if (sd.screenVideo && !wantVideo) missingVideo = true;
     if (wantVideo) { if (wantVideo !== d.videoId) pending.push(showVideoId(d, wantVideo).catch(() => {})); }
@@ -94,6 +95,7 @@ function restore(s){
       if (hadVideo || wantImage !== d.imageId || d.imageId === undefined) pending.push(showImageId(d, wantImage).catch(() => {}));
     }
   });
+  for (const d of devices) setScreenScroll(d, d.screenScroll);   // screens whose media was kept: re-crop
   if (missingVideo) projStatus.textContent = 'Algún vídeo de pantalla no está guardado aquí: vuelve a elegirlo.';
 
   camera.fov = s.camera.fov; camera.updateProjectionMatrix(); $('fov').value = s.camera.fov;

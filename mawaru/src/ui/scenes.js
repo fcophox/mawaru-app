@@ -179,7 +179,7 @@ async function refreshOtherThumbs(){
         if (!x) return;
         d.group.position.fromArray(x.position);
         const tex = x.screenImage && texReady.get(x.screenImage);
-        if (tex) coverUV(tex, tex.image.width / tex.image.height, d.screenAspect);
+        if (tex) coverUV(tex, tex.image.width / tex.image.height, d.screenAspect, x.screenScroll ?? 0);
         d.screenMat.map = tex || placeholderTexture(d.screenAspect); d.screenMat.needsUpdate = true;
       });
       s.thumb = captureThumb();
