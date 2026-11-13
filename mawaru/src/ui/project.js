@@ -11,7 +11,7 @@ import { images, videos, showImageId, showVideoId, stopVideo, blobToDataURL, dat
 import { look, LOOK_DEFAULTS, ENVIRONMENTS, applyLook, applyEnvironment } from './look.js';
 import { bg, BG_DEFAULTS, FORMATS, applyBackground, setFormat } from './frame.js';
 import { renderTimeline } from './timeline.js';
-import { scenesFileData, sceneImageIds, setScenesFromFile, sceneChanged } from './scenes.js';
+import { scenesFileData, sceneImageIds, setScenesFromFile, sceneChanged, syncSceneDevices } from './scenes.js';
 
 // ---- Project: save / open (.json), autosave, undo / redo ----
 // One snapshot format feeds the JSON file, the local autosave and the undo history.
@@ -123,6 +123,7 @@ export const historyInfo = () => ({ length: history.length, index: historyIndex 
 
 export function markChanged(){
   if (!projectReady) return;
+  syncSceneDevices();                // scenes with «Mismo estilo»: one device's edit applies to all of them
   const s = JSON.stringify(snapshot());
   if (s === history[historyIndex]) return;
   history = history.slice(0, historyIndex + 1); history.push(s);
@@ -134,7 +135,7 @@ function stepHistory(dir){
   const i = historyIndex + dir;
   if (i < 0 || i >= history.length) return;
   historyIndex = i; restore(JSON.parse(history[i]));
-  updateHistoryButtons(); scheduleAutosave();
+  updateHistoryButtons(); scheduleAutosave(); sceneChanged();
 }
 function updateHistoryButtons(){ $('undo').disabled = historyIndex <= 0; $('redo').disabled = historyIndex >= history.length - 1; }
 

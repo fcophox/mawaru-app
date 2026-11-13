@@ -1,18 +1,18 @@
 import * as THREE from 'three';
 import { zipSync } from 'fflate';
 import { state, $ } from '../state.js';
-import { renderer, scene, camera } from '../core/scene.js';
+import { renderer, scene, camera, rig } from '../core/scene.js';
 import { apply } from '../core/animation.js';
 import { frameRig } from '../core/framing.js';
-import { MODELS } from '../core/device-model.js';
+import { MODELS, placeholderTexture } from '../core/device-model.js';
 import { ensureModel } from '../core/local-models.js';
-import { devices } from './devices.js';
-import { gizmoHelper } from './transform.js';
-import { updateShadowCatcher, LOOK_DEFAULTS } from './look.js';
+import { devices, selectedDevice, setDeviceType, setLidAngle, renderDeviceList, createDevice, disposeDevice } from './devices.js';
+import { gizmoHelper, editViewEl } from './transform.js';
+import { updateShadowCatcher, applyLook, LOOK_DEFAULTS } from './look.js';
 import { BG_DEFAULTS, bg } from './frame.js';
-import { renderTimeline } from './timeline.js';
-import { addImage, imageFileToDataURL } from './media.js';
-import { loadProject, snapshot, projName, projStatus } from './project.js';
+import { renderTimeline, updateTimelineState } from './timeline.js';
+import { addImage, imageFileToDataURL, images, coverUV } from './media.js';
+import { loadProject, snapshot, markChanged, projName, projStatus } from './project.js';
 import { exportPNG } from '../export/exporter.js';
 
 // ---- Scenes: a presentation made of 16:9 slides, each one a full project snapshot ----
@@ -51,6 +51,7 @@ async function openScene(i){
   const name = projName.value;             // the presentation keeps one name across scenes
   current = i;
   await loadProject(structuredClone(scenes[i].data), { keepScenes: true });
+  clearTimeout(changeTimer); dirty = false;      // opening a scene is not an edit: nothing to propagate
   projName.value = name;
   renderScenes();
 }
@@ -61,10 +62,24 @@ async function guarded(fn){
   try { await fn(); } finally { busy = false; renderScenes(); }
 }
 
-export const switchScene = i => guarded(async () => {
+export const switchScene = i => { flushChanges(); return guarded(async () => {
   if (i === current || !scenes[i]) return;
+  // an animated slide's unsaved view (zoom, orbit, pan) goes along to the next slide
+  const carry = state.viewDirty && syncOn() && !editViewEl.checked ? { q: rig.quaternion.clone(), p: camera.position.clone() } : null;
   saveActive(); await openScene(i);
-});
+  if (carry) { rig.quaternion.copy(carry.q); camera.position.copy(carry.p); state.viewDirty = true; updateTimelineState(); }
+}); };
+
+// The camera was framed by hand (wheel zoom, orbit, pan, «Encuadrar todo»). A slide is a still shot
+// (one keyframe): the new framing is saved into it right away, so it survives a slide change and,
+// with «Mismo estilo», reaches every slide. Animated slides keep the usual «+ Keyframe» workflow.
+export function viewEdited(){
+  if (!scenes.length || busy || !state.viewDirty || editViewEl.checked) return;
+  if (state.keyframes.length !== 1 || devices.some(d => d.animated)) return;
+  Object.assign(state.keyframes[0], { q: rig.quaternion.clone(), p: camera.position.clone() });
+  state.viewDirty = false;
+  renderTimeline(); markChanged();
+}
 
 const deleteScene = i => guarded(async () => {
   if (scenes.length < 2) return;
@@ -84,17 +99,115 @@ function moveScene(from, to){
   renderScenes();
 }
 
-// Called by the project after every recorded change: keep the slide's snapshot and thumbnail fresh
-let changeTimer;
+// ---- One style for the whole set ----
+// The scenes are a set of designs shown the same way: with «Mismo estilo» on, an edit to a device
+// applies to every device of the scene, and the scene's look (devices, background, appearance,
+// format and camera) is copied to every other scene. Each scene keeps its own designs, and the
+// device positions of a scene with a different number of devices (the last, partial one).
+const syncOn = () => $('syncScenes').checked;
+
+// Before a change is recorded: the selected device sets model, case colour, rotation, scale and lid for its siblings
+export function syncSceneDevices(){
+  if (!scenes.length || busy || !syncOn()) return;
+  const src = selectedDevice();
+  if (!src || src.animated) return;
+  let changed = false;
+  for (const d of devices) {
+    if (d === src || d.animated) continue;
+    if (d.type !== src.type) { setDeviceType(d, src.type, { rescale: false }); changed = true; }
+    d.group.quaternion.copy(src.group.quaternion);
+    d.group.scale.copy(src.group.scale);
+    if (d.caseColor !== src.caseColor) { d.caseColor = src.caseColor; d.setCaseColor(src.caseColor); changed = true; }
+    if (d.lidAngle !== src.lidAngle) setLidAngle(d, src.lidAngle);
+  }
+  if (changed) renderDeviceList();
+}
+
+function propagateStyle(){
+  const a = scenes[current].data;
+  const src = a.devices[a.selectedDevice] ?? a.devices[0];
+  const animated = a.timeline.keyframes.some(k => k.devices);    // per-device keyframes belong to this scene's devices
+  scenes.forEach((s, j) => {
+    if (j === current) return;
+    const d = s.data, sameLayout = d.devices.length === a.devices.length;
+    Object.assign(d, { format: a.format, background: { ...a.background }, look: { ...a.look }, camera: { ...a.camera } });
+    if (!animated) d.timeline = structuredClone(a.timeline);
+    if (!src) return;
+    d.devices = d.devices.map((x, i) => ({ ...x, type: src.type, rotation: [...src.rotation], scale: src.scale, caseColor: src.caseColor,
+      ...(src.lidAngle !== undefined ? { lidAngle: src.lidAngle } : {}),
+      position: sameLayout ? [...a.devices[i].position] : x.position }));
+  });
+}
+
+// Thumbnails of the other scenes after a propagated change, without loading them: the live devices
+// get each scene's positions and screen images for one synchronous render (no flash on screen).
+const texCache = new Map();        // image id -> Promise<Texture>
+const texReady = new Map();        // image id -> Texture
+function texFor(id){
+  if (!texCache.has(id)) texCache.set(id, new THREE.TextureLoader().loadAsync(images.get(id)).then(tex => {
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8; texReady.set(id, tex); return tex;
+  }));
+  return texCache.get(id);
+}
+function clearTexCache(){
+  for (const t of texReady.values()) t.dispose();
+  texCache.clear(); texReady.clear();
+}
+
+let thumbSeq = 0;
+async function refreshOtherThumbs(){
+  const seq = ++thumbSeq;
+  const ids = new Set(scenes.flatMap((s, j) => j === current ? [] : s.data.devices.map(d => d.screenImage)).filter(id => id && images.has(id)));
+  await Promise.all([...ids].map(id => texFor(id).catch(() => null)));
+  if (seq !== thumbSeq || busy || !scenes.length || !devices.length) return;
+  const live = devices.slice(), first = live[0];
+  const saved = live.map(d => ({ p: d.group.position.clone(), visible: d.group.visible, map: d.screenMat.map }));
+  const temps = [];
+  try {
+    scenes.forEach((s, j) => {
+      if (j === current) return;
+      const sd = s.data.devices;
+      while (live.length + temps.length < sd.length) {
+        const t = createDevice({ type: first.type, caseColor: first.caseColor, lidAngle: first.lidAngle });
+        t.group.quaternion.copy(first.group.quaternion); t.group.scale.copy(first.group.scale);
+        temps.push(t);
+      }
+      if (temps.length) applyLook();
+      [...live, ...temps].forEach((d, i) => {
+        const x = sd[i];
+        d.group.visible = !!x;
+        if (!x) return;
+        d.group.position.fromArray(x.position);
+        const tex = x.screenImage && texReady.get(x.screenImage);
+        if (tex) coverUV(tex, tex.image.width / tex.image.height, d.screenAspect);
+        d.screenMat.map = tex || placeholderTexture(d.screenAspect); d.screenMat.needsUpdate = true;
+      });
+      s.thumb = captureThumb();
+    });
+  } finally {
+    temps.forEach(disposeDevice);
+    live.forEach((d, i) => { d.group.position.copy(saved[i].p); d.group.visible = saved[i].visible; d.screenMat.map = saved[i].map; d.screenMat.needsUpdate = true; });
+    updateShadowCatcher();
+  }
+  [...$('sceneList').children].forEach((li, j) => { const img = li.querySelector('img'); if (img && scenes[j]?.thumb) img.src = scenes[j].thumb; });
+}
+
+// Called by the project after every recorded change (and undo / redo): keep the slides fresh
+let changeTimer, dirty = false;
 export function sceneChanged(){
   if (!scenes.length) return;
+  dirty = true;
   clearTimeout(changeTimer);
-  changeTimer = setTimeout(() => {
-    if (busy || !scenes.length) return;
-    saveActive();
-    const img = $('sceneList').children[current]?.querySelector('img');
-    if (img) img.src = scenes[current].thumb;
-  }, 350);
+  changeTimer = setTimeout(flushChanges, 350);
+}
+function flushChanges(){
+  clearTimeout(changeTimer);
+  if (!dirty || busy || !scenes.length) return;
+  dirty = false;
+  saveActive();
+  const img = $('sceneList').children[current]?.querySelector('img');
+  if (img) img.src = scenes[current].thumb;
+  if (syncOn() && scenes.length > 1) { propagateStyle(); refreshOtherThumbs(); }
 }
 
 // ---- Bulk creation ----
@@ -112,7 +225,7 @@ export async function createScenes({ files, type, perScene = 3, append = false, 
       ids.push(addImage(await imageFileToDataURL(files[i])));
     }
     const name = append && scenes.length ? projName.value : `Escenas · ${m.label}`;
-    if (append && scenes.length) saveActive(); else scenes.length = 0;
+    if (append && scenes.length) { flushChanges(); saveActive(); } else { scenes.length = 0; clearTexCache(); }
     const first = scenes.length, total = Math.ceil(ids.length / perScene);
     let camP = null;
     for (let g = 0; g < total; g++) {
@@ -145,12 +258,13 @@ export async function createScenes({ files, type, perScene = 3, append = false, 
 export function scenesFileData(){
   if (!scenes.length) return null;
   if (!busy) scenes[current].data = snapshot();
-  return { scenes: scenes.map(s => ({ data: s.data, thumb: s.thumb })), activeScene: current };
+  return { scenes: scenes.map(s => ({ data: s.data, thumb: s.thumb })), activeScene: current, sceneSync: syncOn() };
 }
 export const sceneImageIds = () => scenes.flatMap(s => [...s.data.devices.map(d => d.screenImage), s.data.background?.imageId]).filter(Boolean);
 
 export function setScenesFromFile(p){
-  scenes.length = 0;
+  scenes.length = 0; clearTexCache();
+  $('syncScenes').checked = p.sceneSync ?? true;
   for (const s of Array.isArray(p.scenes) ? p.scenes : []) if (s?.data?.timeline) scenes.push({ data: s.data, thumb: s.thumb ?? null });
   current = THREE.MathUtils.clamp(p.activeScene ?? 0, 0, Math.max(scenes.length - 1, 0));
   renderScenes();
@@ -159,6 +273,7 @@ export function setScenesFromFile(p){
 // ---- Export: one 16:9 PNG per scene, in a ZIP ----
 async function exportAllScenes(button){
   if (!scenes.length) return;
+  flushChanges();
   const status = $('exportStatus'), files = {}, back = current, t0 = performance.now();
   const buttons = [$('exportScenes'), $('exportScenesSide')];
   await guarded(async () => {
@@ -219,6 +334,8 @@ export function renderScenes(){
 export function initScenes(showSplash){
   $('addScenes').onclick = () => showSplash({ canCancel: true, mode: 'scenes', append: true });
   $('exportScenes').onclick = e => exportAllScenes(e.currentTarget);
+  // turning it back on unifies the set right away, from the scene on screen
+  $('syncScenes').onchange = e => { if (e.target.checked) { syncSceneDevices(); sceneChanged(); } };
   $('exportScenesSide').onclick = e => exportAllScenes(e.currentTarget);
   // PageUp / PageDown step through the slides (outside of text fields)
   addEventListener('keydown', e => {

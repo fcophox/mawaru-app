@@ -20,7 +20,7 @@ export const ENVIRONMENTS = {
 };
 const CASE_COLORS = [['#ecebe7', 'Blanco'], ['#bdb7ab', 'Titanio natural'], ['#2b2b2e', 'Titanio negro'], ['#3b4a5e', 'Azul'], ['#c4a986', 'Desierto']];
 export const LOOK_DEFAULTS = { env: 'room', envIntensity: 1, envRotation: 0,
-  shadow: true, shadowIntensity: 0.35, shadowSoftness: 16, reflections: true, reflectionIntensity: 0.18 };
+  shadow: true, shadowIntensity: 0.35, shadowSoftness: 16, shadowDistance: 1, reflections: true, reflectionIntensity: 0.18 };
 export const look = { ...LOOK_DEFAULTS };
 
 const pmrem = new THREE.PMREMGenerator(renderer);
@@ -71,7 +71,8 @@ export function updateShadowCatcher(){
     shadowPlane.position.set(center.x, box.min.y - 0.02, center.z);
   } else {
     shadowPlane.rotation.set(0, 0, 0);
-    shadowPlane.position.set(center.x, center.y, box.min.z - Math.max(1.3, radius * 0.12));
+    // shadowDistance scales the gap to the backdrop: closer = a tighter shadow that hugs the device
+    shadowPlane.position.set(center.x, center.y, box.min.z - Math.max(0.02, Math.max(1.3, radius * 0.12) * look.shadowDistance));
   }
   // orthographic shadow camera sized to the scene (keeps the blur consistent for small and big devices)
   const cam = key.shadow.camera, r = radius * 1.6;
@@ -108,7 +109,7 @@ export function syncLookUI(){
   const set = (id, v) => { const el = $(id); if (el.type === 'checkbox') el.checked = v; else el.value = v; };
   set('envPreset', look.env); set('envIntensity', look.envIntensity); set('envRotation', look.envRotation);
   set('caseColor', selectedDevice()?.caseColor ?? '#ecebe7'); set('shadowOn', look.shadow); set('shadowIntensity', look.shadowIntensity);
-  set('shadowSoftness', look.shadowSoftness); set('reflectOn', look.reflections); set('reflectIntensity', look.reflectionIntensity);
+  set('shadowSoftness', look.shadowSoftness); set('shadowDistance', look.shadowDistance); set('reflectOn', look.reflections); set('reflectIntensity', look.reflectionIntensity);
 }
 
 export function initLook(){
@@ -116,7 +117,7 @@ export function initLook(){
   envSel.innerHTML = Object.entries(ENVIRONMENTS).map(([k, e]) => `<option value="${k}">${e.label}</option>`).join('');
   envSel.onchange = () => { look.env = envSel.value; applyLook(); applyEnvironment(); markChanged(); };
   for (const [id, keyName] of [['envIntensity', 'envIntensity'], ['envRotation', 'envRotation'],
-      ['shadowIntensity', 'shadowIntensity'], ['shadowSoftness', 'shadowSoftness'], ['reflectIntensity', 'reflectionIntensity']]) {
+      ['shadowIntensity', 'shadowIntensity'], ['shadowSoftness', 'shadowSoftness'], ['shadowDistance', 'shadowDistance'], ['reflectIntensity', 'reflectionIntensity']]) {
     const el = $(id);
     el.addEventListener('input', () => { look[keyName] = Number(el.value); applyLook(); });
     el.addEventListener('change', () => markChanged());

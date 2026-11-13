@@ -90,6 +90,7 @@
     <label>Sombra <input id="shadowOn" type="checkbox" checked></label>
     <label>· Intensidad <input id="shadowIntensity" type="range" min="0" max="1" step="0.05" value="0.35"></label>
     <label>· Suavidad <input id="shadowSoftness" type="range" min="1" max="30" step="1" value="16"></label>
+    <label title="Separación entre el dispositivo y el fondo donde cae la sombra: menos = sombra más pegada">· Distancia <input id="shadowDistance" type="range" min="0" max="2" step="0.05" value="1"></label>
     <label>Reflejos pantalla <input id="reflectOn" type="checkbox" checked></label>
     <label>· Intensidad <input id="reflectIntensity" type="range" min="0" max="1" step="0.02" value="0.18"></label>
   </section>
@@ -122,6 +123,7 @@
 </aside>
 <nav id="scenesPanel" aria-label="Escenas" hidden>
   <div class="scenes-head"><b>Escenas</b><span class="muted" id="sceneCount"></span><button id="addScenes" title="Añadir más diseños como escenas nuevas">+ Diseños</button></div>
+  <label class="scenes-sync" title="Los cambios de dispositivos, fondo, apariencia y cámara se aplican a todos los dispositivos y a todas las escenas"><input type="checkbox" id="syncScenes" checked> Mismo estilo en todas las escenas</label>
   <ol id="sceneList"></ol>
   <button id="exportScenesSide" class="wide" title="Un PNG 16:9 por escena, en un ZIP">Exportar escenas (PNG)</button>
 </nav>

@@ -7,6 +7,7 @@ import { devices } from './devices.js';
 import { gizmo, editViewEl } from './transform.js';
 import { updateTimelineState } from './timeline.js';
 import { markChanged } from './project.js';
+import { viewEdited } from './scenes.js';
 
 // ---- Camera framing with the mouse (sets the view that "+ Keyframe" captures) ----
 // Drag: orbit the rig around the device · Shift/right-drag: pan · Wheel: dolly.
@@ -23,6 +24,7 @@ export function fitAll(){
   camera.quaternion.identity();
   camera.position.copy(frameRig(devices.map(d => d.group), rig.quaternion));
   updateTimelineState();
+  viewEdited();
 }
 
 export function initCameraControls(){
@@ -36,7 +38,7 @@ export function initCameraControls(){
   $('fov').addEventListener('change', () => markChanged());
 
   const canvas = renderer.domElement;
-  let orbit = null;
+  let orbit = null, wheelTimer;
   canvas.addEventListener('contextmenu', e => e.preventDefault());
   canvas.addEventListener('pointerdown', e => {
     if (gizmo.axis !== null || gizmo.dragging || editViewEl.checked) return;
@@ -58,7 +60,7 @@ export function initCameraControls(){
     }
     updateTimelineState();
   });
-  canvas.addEventListener('pointerup', () => { orbit = null; });
+  canvas.addEventListener('pointerup', () => { if (orbit) viewEdited(); orbit = null; });
   canvas.addEventListener('wheel', e => {
     if (editViewEl.checked) return;
     e.preventDefault();
@@ -66,5 +68,6 @@ export function initCameraControls(){
     state.playing = false;
     camera.position.z = THREE.MathUtils.clamp(camera.position.z * Math.exp(e.deltaY * 0.001), 3, 80);
     updateTimelineState();
+    clearTimeout(wheelTimer); wheelTimer = setTimeout(viewEdited, 250);   // once the wheel stops
   }, { passive: false });
 }

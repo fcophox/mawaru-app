@@ -56,7 +56,7 @@ export function refitScreen(dev){
 // ---- Video on the device screens ----
 // Preview: each <video> follows the timeline clock (play/pause/scrub, drift-corrected).
 // Export: every output frame seeks each video to its exact time before rendering (seekVideosExact).
-function coverUV(tex, ia, fa){     // crop like CSS object-fit: cover
+export function coverUV(tex, ia, fa){     // crop like CSS object-fit: cover
   tex.repeat.set(1, 1); tex.offset.set(0, 0);
   if (ia > fa) { tex.repeat.x = fa / ia; tex.offset.x = (1 - tex.repeat.x) / 2; }
   else { tex.repeat.y = ia / fa; tex.offset.y = (1 - tex.repeat.y) / 2; }
