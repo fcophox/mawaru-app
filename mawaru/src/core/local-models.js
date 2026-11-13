@@ -79,9 +79,12 @@ export const modelReady = type => !isLocal(type) || templates.has(type);
 
 function prepare(type, root){
   const model = MODELS[type], entry = model.entry;
-  // baked shadow meshes: the editor draws its own
+  // baked shadow meshes: the editor draws its own. Some come as a generic unlit "Plane" quad
+  // (iPhone 13, Glass Phone) whose shadow texture renders as a black square behind the device.
+  const isShadow = o => /shadow/i.test(o.name) || /shadow/i.test(o.material?.name ?? '')
+    || (/^plane(_\d+)?$/i.test(o.name) && o.material?.isMeshBasicMaterial);
   const drop = [];
-  root.traverse(o => { if (o.isMesh && (/shadow/i.test(o.name) || /shadow/i.test(o.material?.name ?? ''))) drop.push(o); });
+  root.traverse(o => { if (o.isMesh && isShadow(o)) drop.push(o); });
   drop.forEach(o => o.removeFromParent());
 
   // screens: glTF puts the UV origin top-left; the editor's textures assume bottom-left → flip once here
