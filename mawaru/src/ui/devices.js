@@ -138,7 +138,7 @@ export function initDevices(){
   fillModelSelect();
   $('addDevice').onclick = () => {
     const src = selectedDevice();
-    if (!src) return showSplash({ canCancel: true });      // empty canvas: pick the first device
+    if (!src) return showSplash({ canCancel: true, mode: 'devices' });      // empty canvas: pick the first device
     createDevice({ type: src.type, position: [nextSlot(src.type), 0, 0], caseColor: src.caseColor });
     applyLook(); selectDevice(devices.length - 1); markChanged();
   };

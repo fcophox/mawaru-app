@@ -14,6 +14,7 @@ import { initTimeline, setPreset, seekTo, updatePlayhead, renderTimeline } from 
 import { initMedia, syncVideoPreview } from './ui/media.js';
 import { initProject, startProject, newProject, snapshot, loadProject, projectFile, historyInfo } from './ui/project.js';
 import { initSplash, showSplash } from './ui/splash.js';
+import { initScenes, switchScene } from './ui/scenes.js';
 import { registerLocalModels } from './core/local-models.js';
 import { initTabs } from './ui/tabs.js';
 import { initExport, exportVideo, exportPNG, exportPNGSequence } from './export/exporter.js';
@@ -32,6 +33,7 @@ initDevices();
 initExport();
 initProject();
 initSplash();
+initScenes(showSplash);
 // The canvas starts empty: nothing loads until a device is picked on the start screen
 Object.assign(state, { keyframes: [{ t: 0, q: new THREE.Quaternion(), p: new THREE.Vector3(0, 0, 30), ease: 'mawaru', devices: {} }],
   duration: 4, selected: 0, playing: false });
@@ -67,7 +69,7 @@ renderer.setAnimationLoop(now => {
 // Console / automation hooks (used by the browser tests)
 Object.assign(window, {
   seek: s => { state.playing = false; seekTo(s); },
-  setPreset, newProject, showSplash,
+  setPreset, newProject, showSplash, switchScene,
   timeline: { get keyframes(){ return state.keyframes; }, get duration(){ return state.duration; }, get currentTime(){ return state.currentTime; } },
   project: { snapshot, loadProject, projectFile, devices, get screenVideo(){ return selectedDevice()?.video?.el; }, get history(){ return historyInfo(); } },
   exportVideo, exportPNG, exportPNGSequence,

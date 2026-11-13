@@ -125,3 +125,66 @@ aside label[hidden] { display:none; }
 .chip:hover { background:#24252c; color:var(--fg); }
 .chip:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
 .chip.active { background:#2c2d35; color:#fff; }
+
+/* ---- Start screen: home with two modes ---- */
+.splash-card:not(.wide-card) { width:min(720px, 100%); }
+.splash-view[hidden] { display:none; }
+.modes { display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; margin:20px 0 4px; }
+.mode { display:flex; flex-direction:column; align-items:flex-start; gap:6px; padding:18px; background:#24252c; color:var(--fg); border:1px solid #3a3b44; border-radius:12px; cursor:pointer; font:inherit; text-align:left; transition:border-color .15s, transform .15s; }
+.mode:hover, .mode:focus-visible { border-color:var(--accent); transform:translateY(-2px); outline:none; }
+.mode svg { width:100%; height:auto; aspect-ratio:3 / 2; background:#1b1c21; border-radius:8px; padding:12px 8px; margin-bottom:6px; }
+.mode b { font-size:15px; }
+.t-frame { fill:#e9e6ff; opacity:.12; stroke:#8a8b94; stroke-width:1; }
+.back { background:transparent; color:var(--muted); border:0; padding:0; margin:0 0 10px; cursor:pointer; font:inherit; font-size:12px; }
+.back:hover, .back:focus-visible { color:var(--fg); outline:none; text-decoration:underline; }
+@media (max-width:560px) { .modes { grid-template-columns:1fr; } }
+
+/* ---- Scenes wizard ---- */
+.wiz { display:grid; grid-template-columns:minmax(0, 1.15fr) minmax(0, 1fr); gap:18px; margin-top:16px; }
+.wiz-col { display:flex; flex-direction:column; gap:10px; min-width:0; }
+.wiz-head { display:flex; align-items:center; gap:8px; min-height:30px; }
+.wiz-head input { margin-left:auto; width:170px; background:#2a2b33; color:var(--fg); border:1px solid #3a3b44; border-radius:6px; padding:5px 8px; font:inherit; }
+.wiz-head .link { margin-left:auto; background:none; border:0; color:var(--muted); cursor:pointer; font:inherit; font-size:12px; }
+.wiz-head .link:hover { color:var(--fg); text-decoration:underline; }
+.wiz-head .link[hidden] { display:none; }
+.design-drop { display:flex; flex-direction:column; align-items:center; gap:4px; padding:18px; border:1.5px dashed #4a4b56; border-radius:10px; color:#c9cad1; text-align:center; cursor:pointer; transition:border-color .15s, background .15s; }
+.design-drop svg { width:26px; height:26px; color:var(--accent); }
+.design-drop:hover, .design-drop:focus-visible, .design-drop.over { border-color:var(--accent); background:#5b8cff14; outline:none; }
+.design-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(74px, 1fr)); gap:8px; max-height:min(300px, 34vh); overflow:auto; padding:2px; }
+.design-grid:empty { display:none; }
+.design { position:relative; aspect-ratio:9 / 19.5; border-radius:8px; overflow:hidden; background:#24252c; border:1px solid #3a3b44; }
+.design img { width:100%; height:100%; object-fit:cover; display:block; }
+.design .n { position:absolute; left:4px; top:4px; min-width:18px; padding:0 4px; border-radius:9px; background:#000a; color:#fff; font-size:10px; line-height:18px; text-align:center; }
+.design .x { position:absolute; right:3px; top:3px; width:20px; height:20px; border-radius:50%; border:0; background:#000a; color:#fff; cursor:pointer; font-size:14px; line-height:20px; padding:0; opacity:0; transition:opacity .12s; }
+.design:hover .x, .design .x:focus-visible { opacity:1; }
+.scene-dev-grid { height:min(300px, 36vh); align-content:start; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); }
+.scene-dev-grid .local-item img { width:90px; height:48px; }
+.local-item.selected { border-color:var(--accent); background:#2f3550; }
+.per-scene { margin-left:auto; }
+.per-scene button { width:36px; flex:none; }
+.wiz-foot { display:flex; align-items:center; gap:12px; margin-top:16px; padding-top:14px; border-top:1px solid #33343c; }
+.wiz-foot .primary { margin-left:auto; background:var(--accent); color:#fff; border:0; border-radius:8px; padding:9px 18px; font:inherit; font-weight:600; cursor:pointer; }
+.wiz-foot .primary:disabled { opacity:.45; cursor:default; }
+.wiz-foot .primary.loading { cursor:progress; }
+@media (max-width:760px) { .wiz { grid-template-columns:1fr; } }
+
+/* ---- Slides panel: the scenes of the presentation, left of the canvas ---- */
+#scenesPanel { order:0; width:208px; flex:none; display:flex; flex-direction:column; gap:10px; padding:12px 10px; background:var(--panel); border-right:1px solid #2c2d35; min-height:0; }
+#scenesPanel[hidden] { display:none; }
+.scenes-head { display:flex; align-items:center; gap:6px; }
+.scenes-head button { margin-left:auto; background:#2a2b33; color:var(--fg); border:1px solid #3a3b44; border-radius:6px; padding:4px 8px; cursor:pointer; font:inherit; font-size:11.5px; }
+.scenes-head button:hover { border-color:var(--accent); }
+#sceneList { list-style:none; margin:0; padding:2px 4px 2px 0; flex:1; min-height:0; overflow:auto; display:flex; flex-direction:column; gap:10px; }
+.scene { position:relative; display:flex; gap:6px; align-items:flex-start; }
+.scene .num { width:16px; flex:none; text-align:right; font-size:11px; color:var(--muted); padding-top:2px; }
+.scene.active .num { color:var(--fg); font-weight:600; }
+.scene .thumb { flex:1; min-width:0; aspect-ratio:16 / 9; padding:0; border:2px solid transparent; border-radius:6px; overflow:hidden; background:#2a2b33; cursor:pointer; box-shadow:0 0 0 1px #ffffff14; }
+.scene .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.scene .thumb .empty { font-size:11px; color:var(--muted); }
+.scene .thumb:hover { border-color:#5b8cff80; }
+.scene .thumb:focus-visible { outline:none; border-color:var(--accent); }
+.scene.active .thumb { border-color:var(--accent); }
+.scene.drop .thumb { box-shadow:0 -3px 0 0 var(--accent); }
+.scene .del { position:absolute; right:4px; top:4px; width:20px; height:20px; border-radius:50%; border:0; background:#000b; color:#fff; cursor:pointer; padding:0; font-size:14px; line-height:20px; opacity:0; transition:opacity .12s; }
+.scene:hover .del, .scene .del:focus-visible { opacity:1; }
+#scenesExport b { font-size:12px; }
