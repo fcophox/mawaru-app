@@ -119,7 +119,10 @@ function prepare(type, root){
   inner.add(root);
 
   const [sw, sh] = entry.screenSize ?? [];
-  model.screenAspect = sw && sh ? sw / sh : screenBox ? screenBox.x / Math.max(screenBox.y, 1e-6) : 0.5;
+  // without a pixel size, measure the screen mesh: it can lie in XY (phones) or XZ (some laptops),
+  // so its height is the larger of Y and Z — using Y alone made an XZ screen's texture 0 px tall (black)
+  model.screenAspect = sw && sh ? sw / sh
+    : screenBox ? screenBox.x / Math.max(screenBox.y, screenBox.z, 1e-6) : 0.5;
   model.caseColor = caseColor ?? '#cccccc';
   model.hasScreen = screenNames.size > 0;
   return { inner, colorable };
