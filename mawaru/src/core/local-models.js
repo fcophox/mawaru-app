@@ -106,7 +106,11 @@ function prepare(type, root){
   const colorable = new Set(entry.colorableMaterials);
   let caseColor = null;
   root.traverse(o => {
-    if (o.isMesh && !caseColor && colorable.has(o.material?.name)) caseColor = '#' + o.material.color.getHexString();
+    if (!o.isMesh) return;
+    if (!caseColor && colorable.has(o.material?.name)) caseColor = '#' + o.material.color.getHexString();
+    // shadows from both faces: three only uses back faces by default, so a single-sided back
+    // panel facing the light (iPhone 15) cast nothing and the shadow was just the frame's outline
+    if (o.material) o.material.shadowSide = THREE.DoubleSide;
   });
 
   // imported models are in real centimetres: one shared factor keeps their true relative sizes
