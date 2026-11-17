@@ -4,7 +4,7 @@ Editor web de mockups 3D de dispositivos: timeline con keyframes, varios disposi
 
 Al abrirlo, el lienzo está vacío y aparece una pantalla de inicio para elegir el dispositivo, con filtros por tipo (iPhone, Phone, Multi, Tablet, Laptop, Watch…) y un buscador. Cada proyecto arranca con un giro suave que encuadra el dispositivo completo, con el timeline en pausa. Se puede cambiar el modelo de cualquier dispositivo y mezclar varios en la misma escena, a su tamaño real relativo.
 
-Si no hay modelos importados (ver más abajo), la app ofrece sus modelos procedurales: iPhone 15 Pro, iPad Pro 11" y MacBook Pro 14" con tapa abatible.
+Si no hay una carpeta `local-models/` (ver más abajo), la app ofrece sus modelos procedurales: iPhone 15 Pro, iPad Pro 11" y MacBook Pro 14" con tapa abatible. A estos se suman los modelos `.glb` que importes desde la propia app.
 
 ## Arrancar
 
@@ -17,7 +17,24 @@ npm run dev        # http://127.0.0.1:5173
 - `npm run preview`: sirve `dist/` en http://127.0.0.1:4173.
 - `npm start`: compila y sirve `dist/` junto con `local-models/` en http://127.0.0.1:4317. Lo abre en una ventana propia de Chrome o, si no está instalado, en el navegador por defecto.
 
-### Como app de Mac
+### Como app de escritorio (Electron)
+
+```bash
+npm run desktop       # compila y abre Mawaru en su propia ventana
+npm run desktop:dev   # igual, pero cargando el servidor de Vite (antes, npm run dev)
+npm run dist:mac      # genera release/Mawaru-<versión>-universal.dmg (Apple Silicon + Intel, ~230 MB)
+npm run dist:mac:arm64  # solo Apple Silicon, ~120 MB: más rápido para probar
+npm run icon          # vuelve a generar build/icon.png desde build/icon.svg
+```
+
+- La app carga `dist/` desde un esquema propio (`app://mawaru`), registrado como contexto seguro, así que la exportación con WebCodecs funciona igual que en `127.0.0.1`. El código está en `electron/main.cjs`.
+- **Modelos:** el `.dmg` no incluye `local-models/`. La app los busca, en orden, en `$MAWARU_MODELS`, en `~/Library/Application Support/Mawaru/local-models` y, sin empaquetar, en el `local-models/` del repo. `npm run desktop:link-models` enlaza el del repo a la carpeta de la app. **Archivo → Mostrar carpeta de modelos** abre esa carpeta.
+- Guardar y exportar abren el diálogo nativo de «Guardar como». El menú **Archivo** tiene Nuevo (⌘N), Abrir (⌘O) y Guardar (⌘S).
+- El icono se dibuja en `build/icon.svg`. `npm run icon` lo exporta a `build/icon.png` (1024 px), y electron-builder genera el `.icns` a partir de él.
+- El `.dmg` muestra la app junto a un acceso a Aplicaciones para arrastrarla. La app requiere macOS 12 o posterior.
+- El `.dmg` está firmado ad hoc, sin cuenta de Apple Developer: abre sin avisos en este Mac, pero en otro Mac Gatekeeper lo bloquea. Para distribuirlo hay que firmarlo y notarizarlo.
+
+### Lanzador local (sin Electron)
 
 ```bash
 npm run app
@@ -46,6 +63,7 @@ src/
     device-model.js     modelos procedurales (iPhone, iPad, MacBook Pro) y sus pantallas
     framing.js          encuadre automático (todo el dispositivo en cuadro) y tomas de plantilla
     local-models.js     modelos importados: registro, carga GLB, pantalla/carcasa/cristal por dispositivo
+    user-models.js      modelos .glb importados desde la app: análisis, miniatura y almacenamiento en IndexedDB
     animation.js        interpolación de cámara y dispositivos en un instante t
   ui/                   cada panel con su función init…()
     devices.js          lista de dispositivos, añadir/duplicar/eliminar, selección por clic
@@ -56,14 +74,27 @@ src/
     frame.js            formato (16:9, 9:16, 1:1, 4:5) y fondo
     media.js            imagen o vídeo en pantalla, sincronizado con el timeline
     project.js          guardar/abrir .mawaru.json, autoguardado, deshacer/rehacer, proyecto nuevo
-    splash.js           pantalla de inicio: filtros, buscador y elección del dispositivo
+    splash.js           pantalla de inicio: filtros, buscador, elección del dispositivo e importación de .glb
   export/
     exporter.js         render por fotograma (supersampling + jitter) → MP4 / PNG / ZIP
     audio.js            mezcla y codificación AAC del audio de los vídeos
+electron/main.cjs       app de escritorio: ventana, esquema app://, menú y descargas
+build/                  icono de la app (icon.svg → icon.png) para electron-builder
 tools/                  importación local de presets y modelos, y visor de comprobación
 ```
 
 Convención: al importarse, los módulos solo declaran cosas; el DOM se conecta en los `init…()`, que `main.js` llama en orden. Así los imports circulares entre paneles son seguros.
+
+## Importar tus propios modelos (.glb)
+
+En la pantalla de inicio, **Crear dispositivos → Importar modelo .glb…** (en la app de escritorio también en **Archivo → Importar modelo .glb…**):
+- Acepta glTF binario (`.glb`) con las texturas incluidas. Un `.gltf` con archivos aparte no sirve: expórtalo como `.glb` desde Blender u otra herramienta.
+- La app propone:
+  - la **pantalla**: la malla cuyo nombre, el de un nodo padre o el de su material contiene *screen*, *display*, *pantalla*, *lcd* u *oled*. Si la malla no tiene UV, la imagen se proyecta sobre su plano;
+  - el **material de la carcasa**, que se podrá recolorear;
+  - el **tamaño real**: deduce si el modelo está en metros, centímetros o milímetros. Puedes corregir el lado más largo en cm.
+- Los modelos se guardan en el navegador o en la app (IndexedDB), con una miniatura. Para quitar uno, pasa el ratón por su tarjeta y pulsa ×.
+- Un proyecto guardado no incluye el modelo. Si lo abres en otro equipo sin ese modelo, se usa el iPhone procedural.
 
 ## Importar presets y modelos (uso personal)
 
@@ -104,4 +135,4 @@ python3 tools/rotato2glb.py "iPhone 15 Pro"      # solo los modelos que contenga
 ## Créditos
 
 - three.js, mp4-muxer y fflate (npm).
-- HDRIs de [Poly Haven](https://polyhaven.com) (CC0), que se cargan en tiempo de ejecución.
+- HDRIs de [Poly Haven](https://polyhaven.com) (CC0), incluidos en `public/hdri/` (1k) para que funcionen sin conexión.

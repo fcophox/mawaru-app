@@ -111,6 +111,27 @@
 .local-item img { width:110px; height:58px; object-fit:contain; }
 .local-item.loading { opacity:.6; cursor:progress; }
 .local-note { margin:8px 0 0; }
+.local-note:empty { display:none; }
+.local-cell { position:relative; display:grid; }
+.local-cell[hidden] { display:none; }
+.local-cell .x { position:absolute; right:4px; top:4px; width:20px; height:20px; border-radius:50%; border:0; background:#000a; color:#fff; cursor:pointer; font-size:14px; line-height:20px; padding:0; opacity:0; transition:opacity .12s; }
+.local-cell:hover .x, .local-cell .x:focus-visible { opacity:1; }
+.import-row { display:flex; align-items:center; gap:10px; margin-top:14px; font-size:12px; }
+.import-row .secondary { background:#2a2b33; color:var(--fg); border:1px solid #3a3b44; border-radius:7px; padding:7px 12px; cursor:pointer; font:inherit; }
+.import-row .secondary:hover, .import-row .secondary:focus-visible { border-color:var(--accent); outline:none; }
+.import-dialog { width:min(560px, calc(100vw - 32px)); background:var(--panel); color:var(--fg); border:1px solid #33343c; border-radius:14px; padding:22px; box-shadow:0 30px 80px #000a; }
+.import-dialog::backdrop { background:#0008; }
+.import-dialog h3 { margin:0 0 14px; font-size:17px; }
+.import-body { display:grid; grid-template-columns:180px 1fr; gap:16px; }
+.import-preview { display:grid; place-items:center; background:#24252c; border:1px solid #3a3b44; border-radius:10px; min-height:150px; }
+.import-preview img { max-width:100%; max-height:150px; }
+.import-fields { display:grid; gap:8px; }
+.import-fields label { display:grid; grid-template-columns:130px 1fr; align-items:center; gap:8px; font-size:12.5px; }
+.import-fields input, .import-fields select { min-width:0; background:#2a2b33; color:var(--fg); border:1px solid #3a3b44; border-radius:6px; padding:5px 8px; font:inherit; }
+.import-dialog #impNote { font-size:12px; margin:12px 0 0; }
+.import-foot { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+.import-foot button { background:#2a2b33; color:var(--fg); border:1px solid #3a3b44; border-radius:7px; padding:7px 14px; cursor:pointer; font:inherit; }
+.import-foot button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
 #splashStatus:empty { display:none; }
 #splashStatus { margin-top:8px; }
 .local-item[hidden] { display:none; }

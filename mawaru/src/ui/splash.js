@@ -1,6 +1,8 @@
 import { $ } from '../state.js';
 import { MODELS } from '../core/device-model.js';
-import { localTypes, DEVICE_TAGS } from '../core/local-models.js';
+import { localTypes, DEVICE_TAGS, hasFolderModels, pickerTypes } from '../core/local-models.js';
+import { isUserModel, analyzeGLB, renderThumbnail, saveUserModel, deleteUserModel } from '../core/user-models.js';
+import { fillModelSelect } from './devices.js';
 import { newProject } from './project.js';
 import { createScenes, scenes, scenesDeviceType } from './scenes.js';
 
@@ -91,21 +93,36 @@ function renderChips(){
   }
 }
 
-// With imported models the start screen offers only those; the built-in
-// generic templates remain as a fallback when local-models/ is empty (e.g. a fresh clone).
+// A local-models/ folder replaces the built-in templates on the start screen; models imported
+// from the app are listed below whichever set is shown (and can be removed from here).
 function renderLocalTemplates(){
   const box = $('localTemplates'), grid = $('localGrid');
   box.hidden = !localTypes.length;
-  splash.querySelector('.templates').hidden = localTypes.length > 0;
-  splash.querySelector('.splash-card').classList.toggle('only-local', localTypes.length > 0);
-  if (!localTypes.length) return;
+  splash.querySelector('.templates').hidden = hasFolderModels();
+  splash.querySelector('.splash-card').classList.toggle('only-local', hasFolderModels());
+  $('localNote').textContent = hasFolderModels() ? 'Modelos importados en este equipo · solo para uso personal.' : '';
   grid.innerHTML = '';
+  if (!localTypes.length) return;
   for (const type of localTypes) {
     const m = MODELS[type], b = document.createElement('button');
-    b.className = 'local-item'; b.dataset.type = type; b.dataset.search = m.label.toLowerCase(); b.dataset.tags = m.tags.join(' ');
+    b.className = 'local-item'; b.dataset.type = type;
     b.innerHTML = (m.thumbnail ? `<img src="${m.thumbnail}" alt="" loading="lazy">` : '') + `<span>${m.label}</span>`;
     b.onclick = () => start(() => newProject(type), b);
-    grid.append(b);
+    let cell = b;
+    if (isUserModel(type)) {          // own imports can be removed: the button sits next to the item, not inside it
+      cell = document.createElement('div');
+      cell.className = 'local-cell';
+      const x = Object.assign(document.createElement('button'), { className: 'x', textContent: '×', title: 'Quitar modelo' });
+      x.setAttribute('aria-label', `Quitar ${m.label}`);
+      x.onclick = async () => {
+        if (!confirm(`¿Quitar «${m.label}» de tus modelos? Los proyectos que lo usen mostrarán un iPhone genérico.`)) return;
+        await deleteUserModel(type);
+        refreshModels();
+      };
+      cell.append(b, x);
+    }
+    cell.dataset.search = m.label.toLowerCase(); cell.dataset.tags = m.tags.join(' ');
+    grid.append(cell);
   }
   renderChips();
   $('localSearch').oninput = applyFilter;
@@ -116,9 +133,7 @@ function renderLocalTemplates(){
 let designs = [];            // [{ file, url }] in the order they will fill the scenes
 let sceneType = null, perScene = 3, appendMode = false;
 
-const sceneDeviceTypes = () => localTypes.length
-  ? localTypes.filter(t => !MODELS[t].tags.includes('multi'))     // one screen per device: the template places three
-  : ['iphone', 'ipad', 'macbook'];
+const sceneDeviceTypes = () => pickerTypes().filter(t => !MODELS[t].tags?.includes('multi'));   // one screen per device: the template places three
 
 function defaultSceneType(){
   const list = sceneDeviceTypes();
@@ -202,7 +217,73 @@ function initScenesWizard(){
   }, $('createScenes'));
 }
 
+// ---- Import a .glb: suggest name, screen, case material and real size; the user confirms ----
+function refreshModels(){
+  renderLocalTemplates();
+  fillModelSelect();
+  if (view === 'scenes') renderSceneDevices();
+}
+
+const TAG_GUESS = [[/watch|reloj/i, 'watch'], [/macbook|laptop|notebook|port[aá]til/i, 'laptop'],
+  [/ipad|tablet/i, 'tablet'], [/imac|monitor|display|\btv\b/i, 'desktop'], [/phone|iphone|pixel|galaxy|m[oó]vil/i, 'phone']];
+function guessTag(name, cm){
+  return TAG_GUESS.find(([re]) => re.test(name))?.[1]
+    ?? (cm < 6 ? 'watch' : cm < 20 ? 'phone' : cm < 35 ? 'tablet' : 'laptop');
+}
+
+let thumbURL = null;
+async function importModelFile(file){
+  const dialog = $('importDialog'), status = $('splashStatus');
+  status.textContent = 'Leyendo ' + file.name + '…';
+  let info;
+  try { info = await analyzeGLB(file); }
+  catch (err) { console.error(err); status.textContent = 'No se pudo importar: ' + err.message; return; }
+  status.textContent = '';
+  const opts = (list, none) => `<option value="">${none}</option>` + list.map(n => `<option>${n.replace(/</g, '&lt;')}</option>`).join('');
+  const screens = [...new Set(info.meshes.filter(m => m.named).map(m => m.name))];
+  $('impName').value = info.name;
+  $('impScreen').innerHTML = opts(screens, 'Sin pantalla');
+  $('impScreen').value = info.screen ?? '';
+  $('impColor').innerHTML = opts(info.materials, 'Ninguno');
+  $('impColor').value = info.colorable ?? '';
+  const cm = Math.round(info.longest * info.cmPerUnit * 10) / 10;
+  $('impSize').value = cm;
+  $('impTag').value = guessTag(info.name, cm);
+  $('impNote').textContent = !screens.length ? 'Las mallas no tienen nombre: no se puede elegir la pantalla.'
+    : info.screen ? 'Pantalla detectada por su nombre. Cámbiala si no es la correcta.'
+    : 'No se detectó la pantalla: elige la malla donde irá tu diseño.';
+  if (thumbURL) URL.revokeObjectURL(thumbURL);
+  const thumb = await renderThumbnail(info.root).catch(() => null);
+  thumbURL = thumb && URL.createObjectURL(thumb);
+  $('impThumb').src = thumbURL ?? '';
+  dialog.returnValue = '';
+  dialog.showModal();
+  dialog.onclose = async () => {
+    if (dialog.returnValue !== 'ok') return;
+    status.textContent = 'Guardando modelo…';
+    try {
+      const type = await saveUserModel({ file, root: info.root, name: $('impName').value, tag: $('impTag').value,
+        screen: $('impScreen').value || null, colorable: $('impColor').value || null,
+        cmPerUnit: (+$('impSize').value || cm) / info.longest });
+      refreshModels();
+      status.textContent = `Importado: ${MODELS[type].label}`;
+      $('localGrid').querySelector(`[data-type="${type}"]`)?.focus();
+    } catch (err) { console.error(err); status.textContent = 'No se pudo guardar: ' + err.message; }
+  };
+}
+
+// Opens the file picker (from the start screen, the desktop menu or the console)
+export function importModel(){
+  if (splash.hidden || view !== 'devices') showSplash({ canCancel: true, mode: 'devices' });
+  $('modelFile').click();
+}
+
 export function initSplash(){
+  const modelFile = $('modelFile');
+  $('importModel').onclick = () => modelFile.click();
+  modelFile.onchange = () => { if (modelFile.files[0]) importModelFile(modelFile.files[0]); modelFile.value = ''; };
+  // keys typed in the import dialog stay there: no editor shortcuts, no start-screen Escape
+  $('importDialog').addEventListener('keydown', e => e.stopPropagation());
   $('modeDevices').onclick = () => showView('devices');
   $('modeScenes').onclick = () => showView('scenes');
   for (const b of splash.querySelectorAll('[data-back]')) b.onclick = () => showView('home');
@@ -214,6 +295,7 @@ export function initSplash(){
   // capture phase: while the start screen is open, editor shortcuts (Space, K, …) must not fire behind it
   addEventListener('keydown', e => {
     if (splash.hidden) return;
+    if ($('importDialog').open) { e.stopPropagation(); return; }
     if (e.target.matches?.('input') && e.key !== 'Escape') return;   // typing in a search box
     e.stopPropagation();
     if (e.key !== 'Escape' || busy) return;

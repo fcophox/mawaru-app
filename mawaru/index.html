@@ -186,8 +186,13 @@
         <div class="local-head"><b>Tus dispositivos</b><span class="muted" id="localCount"></span><input id="localSearch" type="search" placeholder="Buscar modelo…" aria-label="Buscar modelo"></div>
         <div class="chips" id="localChips" role="toolbar" aria-label="Filtrar por tipo de dispositivo"></div>
         <div class="local-grid" id="localGrid"></div>
-        <p class="muted local-note">Modelos importados en este equipo · solo para uso personal.</p>
+        <p class="muted local-note" id="localNote"></p>
       </div>
+      <div class="import-row">
+        <button class="secondary" id="importModel">Importar modelo .glb…</button>
+        <span class="muted">Usa tus propios modelos 3D. Se guardan en este equipo.</span>
+      </div>
+      <input id="modelFile" type="file" accept=".glb,model/gltf-binary" hidden>
     </section>
 
     <section class="splash-view" id="splashScenes" data-title="scenesTitle" hidden>
@@ -220,6 +225,30 @@
     <div id="splashStatus" class="muted" role="status"></div>
   </div>
 </div>
+
+<dialog id="importDialog" class="import-dialog" aria-labelledby="impTitle">
+  <form method="dialog">
+    <h3 id="impTitle">Importar modelo</h3>
+    <div class="import-body">
+      <div class="import-preview"><img id="impThumb" alt=""></div>
+      <div class="import-fields">
+        <label>Nombre <input id="impName" required maxlength="60"></label>
+        <label>Tipo <select id="impTag">
+          <option value="phone">Teléfono</option><option value="tablet">Tablet</option><option value="laptop">Portátil</option>
+          <option value="desktop">Monitor</option><option value="watch">Reloj</option><option value="generic">Otro</option>
+        </select></label>
+        <label>Pantalla <select id="impScreen"></select></label>
+        <label>Color de carcasa <select id="impColor"></select></label>
+        <label>Lado más largo (cm) <input id="impSize" type="number" min="0.5" max="500" step="0.1" required></label>
+      </div>
+    </div>
+    <p class="muted" id="impNote"></p>
+    <div class="import-foot">
+      <button value="cancel" formnovalidate>Cancelar</button>
+      <button class="primary" value="ok">Importar</button>
+    </div>
+  </form>
+</dialog>
 
 <script type="module" src="/src/main.js"></script>
 </body>
