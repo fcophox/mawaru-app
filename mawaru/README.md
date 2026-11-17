@@ -17,7 +17,20 @@ npm run dev        # http://127.0.0.1:5173
 - `npm run preview`: sirve `dist/` en http://127.0.0.1:4173.
 - `npm start`: compila y sirve `dist/` junto con `local-models/` en http://127.0.0.1:4317. Lo abre en una ventana propia de Chrome o, si no está instalado, en el navegador por defecto.
 
-### Como app de Mac
+### Como app de escritorio (Electron)
+
+```bash
+npm run desktop       # compila y abre Mawaru en su propia ventana
+npm run desktop:dev   # igual, pero cargando el servidor de Vite (antes, npm run dev)
+npm run dist:mac      # genera release/Mawaru-<versión>-arm64.dmg
+```
+
+- La app carga `dist/` desde un esquema propio (`app://mawaru`), registrado como contexto seguro, así que la exportación con WebCodecs funciona igual que en `127.0.0.1`. El código está en `electron/main.cjs`.
+- **Modelos:** el `.dmg` no incluye `local-models/`. La app los busca, en orden, en `$MAWARU_MODELS`, en `~/Library/Application Support/Mawaru/local-models` y, sin empaquetar, en el `local-models/` del repo. `npm run desktop:link-models` enlaza el del repo a la carpeta de la app. **Archivo → Mostrar carpeta de modelos** abre esa carpeta.
+- Guardar y exportar abren el diálogo nativo de «Guardar como». El menú **Archivo** tiene Nuevo (⌘N), Abrir (⌘O) y Guardar (⌘S).
+- El `.dmg` está firmado ad hoc, sin cuenta de Apple Developer: abre sin avisos en este Mac, pero en otro Mac Gatekeeper lo bloquea. Para distribuirlo hay que firmarlo y notarizarlo.
+
+### Lanzador local (sin Electron)
 
 ```bash
 npm run app
@@ -60,6 +73,7 @@ src/
   export/
     exporter.js         render por fotograma (supersampling + jitter) → MP4 / PNG / ZIP
     audio.js            mezcla y codificación AAC del audio de los vídeos
+electron/main.cjs       app de escritorio: ventana, esquema app://, menú y descargas
 tools/                  importación local de presets y modelos, y visor de comprobación
 ```
 
