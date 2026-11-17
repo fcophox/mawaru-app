@@ -68,6 +68,13 @@ details > p a { color: #8fb0ff; }
 .download .lead { margin-bottom: 26px; }
 .reqs { list-style: none; padding: 0; margin: 22px 0 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 22px; color: var(--muted); font-size: 14px; }
 .reqs li::before { content: "✓ "; color: var(--accent); }
+.brew { max-width: 520px; margin: 26px auto 0; text-align: left; font-size: 14.5px; }
+.brew p { margin: 0 0 8px; }
+.brew .muted { font-size: 13.5px; margin-top: 8px; }
+.cmd { display: flex; align-items: center; gap: 8px; background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 6px 6px 6px 14px; }
+.cmd code { flex: 1; background: none; padding: 0; overflow-x: auto; white-space: nowrap; font-size: 13.5px; }
+.copy { flex: none; background: #2a2b34; color: var(--fg); border: 1px solid #3a3b44; border-radius: 7px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; transition: border-color .15s; }
+.copy:hover, .copy:focus-visible { border-color: var(--accent); outline: none; }
 .install { max-width: 520px; margin: 26px auto 0; text-align: left; background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 4px 18px; }
 .install ol { margin: 4px 0 10px; padding-left: 20px; }
 .install p { font-size: 14px; margin: 0 0 14px; }

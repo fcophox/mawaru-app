@@ -7,6 +7,18 @@ const SIGNED = false;
 
 for (const a of document.querySelectorAll('[data-download]')) a.href = DOWNLOAD_URL;
 for (const a of document.querySelectorAll('[data-webapp]')) a.href = WEBAPP_URL;
+// Copy buttons next to Terminal commands
+for (const b of document.querySelectorAll('[data-copy]')) {
+  b.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Copiado'; }
+    catch {   // clipboard blocked: select the command so ⌘C copies it
+      const code = b.parentElement.querySelector('code'), range = document.createRange();
+      range.selectNodeContents(code); getSelection().removeAllRanges(); getSelection().addRange(range);
+      b.textContent = 'Pulsa ⌘C';
+    }
+    setTimeout(() => { b.textContent = 'Copiar'; }, 1600);
+  });
+}
 if (SIGNED) for (const el of document.querySelectorAll('[data-unsigned]')) el.remove();
 
 // The hero video only plays when it can be seen, and never for people who prefer less motion
