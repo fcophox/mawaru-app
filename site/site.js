@@ -1,9 +1,12 @@
 // Where the download buttons point. GitHub Releases' "latest" page always shows the newest .dmg.
 const DOWNLOAD_URL = 'https://github.com/fcophox/mawaru-app/releases/latest';
+// The web version of the editor (its own Vercel project, built from mawaru/)
+const WEBAPP_URL = 'https://mawaru-app.vercel.app/';
 // Set to true once the .dmg is signed with a Developer ID and notarized: hides the Gatekeeper tip.
 const SIGNED = false;
 
 for (const a of document.querySelectorAll('[data-download]')) a.href = DOWNLOAD_URL;
+for (const a of document.querySelectorAll('[data-webapp]')) a.href = WEBAPP_URL;
 if (SIGNED) for (const el of document.querySelectorAll('[data-unsigned]')) el.remove();
 
 // The hero video only plays when it can be seen, and never for people who prefer less motion
