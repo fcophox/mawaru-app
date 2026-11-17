@@ -135,7 +135,15 @@
         <li>Arrastra <b>Mawaru</b> a la carpeta <b>Aplicaciones</b>.</li>
         <li>Ábrela desde Launchpad o Spotlight.</li>
       </ol>
-      <p class="muted" data-unsigned>Si macOS indica que no puede comprobar el desarrollador, haz clic derecho sobre Mawaru en Aplicaciones, elige <b>Abrir</b> y confirma. Solo hace falta la primera vez.</p>
+      <div class="unsigned-note" data-unsigned>
+        <p>La primera vez, macOS avisa de que no puede verificar Mawaru, porque esta versión aún no está notarizada por Apple. Para abrirla:</p>
+        <ol>
+          <li>Cierra el aviso.</li>
+          <li>Abre <b>Ajustes del Sistema → Privacidad y seguridad</b>.</li>
+          <li>En la sección <b>Seguridad</b>, pulsa <b>Abrir igualmente</b> junto a Mawaru y confirma.</li>
+        </ol>
+        <p>Solo hace falta una vez. Si prefieres la Terminal: <code>xattr -dr com.apple.quarantine /Applications/Mawaru.app</code></p>
+      </div>
     </details>
   </section>
 

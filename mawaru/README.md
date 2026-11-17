@@ -32,7 +32,7 @@ npm run icon          # vuelve a generar build/icon.png desde build/icon.svg
 - Guardar y exportar abren el diálogo nativo de «Guardar como». El menú **Archivo** tiene Nuevo (⌘N), Abrir (⌘O) y Guardar (⌘S).
 - El icono se dibuja en `build/icon.svg`. `npm run icon` lo exporta a `build/icon.png` (1024 px), y electron-builder genera el `.icns` a partir de él.
 - El `.dmg` muestra la app junto a un acceso a Aplicaciones para arrastrarla. La app requiere macOS 12 o posterior.
-- El `.dmg` está firmado ad hoc, sin cuenta de Apple Developer: abre sin avisos en este Mac, pero en otro Mac Gatekeeper lo bloquea. Para distribuirlo hay que firmarlo y notarizarlo.
+- El `.dmg` está firmado ad hoc, sin cuenta de Apple Developer. Al abrir la app descargada, Gatekeeper avisa de que no puede verificarla. La primera vez hay que permitirla en **Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente**. Desde macOS 15, «clic derecho → Abrir» ya no la desbloquea. Para distribuirla sin avisos hay que firmarla con un Developer ID y notarizarla.
 
 ### Lanzador local (sin Electron)
 
