@@ -8,9 +8,10 @@ import { devices, selectedDevice, renderDeviceList } from './devices.js';
 import { markChanged } from './project.js';
 
 // ---- Look: HDRI environment, shadow, reflections, case colour ----
-const PH = n => `https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/${n}_1k.hdr`;   // Poly Haven, CC0
+// Poly Haven HDRIs (CC0), bundled in public/hdri/ so they work offline and inside the desktop app
+const PH = n => `/hdri/${n}_1k.hdr`;
 export const ENVIRONMENTS = {
-  room:    { label: 'Estudio (sin conexión)' },
+  room:    { label: 'Estudio neutro' },
   studio:  { label: 'Estudio pequeño', url: PH('studio_small_09') },
   photo:   { label: 'Estudio fotográfico', url: PH('brown_photostudio_02') },
   loft:    { label: 'Loft', url: PH('photo_studio_loft_hall') },
@@ -50,7 +51,7 @@ export async function applyEnvironment(){
   } catch {
     envCache.delete(name);
     if (req !== envRequest) return;
-    envStatus.hidden = false; envStatus.textContent = 'No se pudo cargar el HDRI; usando el estudio sin conexión.';
+    envStatus.hidden = false; envStatus.textContent = 'No se pudo cargar el HDRI; usando el estudio neutro.';
     scene.environment = await loadEnvironment('room');
   }
 }

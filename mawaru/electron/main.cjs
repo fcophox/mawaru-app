@@ -82,6 +82,7 @@ function buildMenu(){
       { label: 'Abrir…', accelerator: 'CmdOrCtrl+O', click: () => click('openProj') },
       { label: 'Guardar', accelerator: 'CmdOrCtrl+S', click: () => click('saveProj') },
       { type: 'separator' },
+      { label: 'Importar modelo .glb…', click: () => win?.webContents.executeJavaScript('window.importModel?.()', true) },
       { label: 'Mostrar carpeta de modelos', click: () => { mkdirSync(userModelsDir(), { recursive: true }); shell.openPath(userModelsDir()); } },
       { type: 'separator' },
       isMac ? { role: 'close', label: 'Cerrar ventana' } : { role: 'quit', label: 'Salir' },

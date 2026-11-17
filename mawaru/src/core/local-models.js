@@ -2,9 +2,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MODELS, placeholderTexture, UNITS_PER_CM } from './device-model.js';
 
-// ---- Imported device models (tools/rotato2glb.py → local-models/) ----
-// Personal use only: the folder is git-ignored and only exists on this machine. When it is
-// missing (or in a production build) the editor simply offers the built-in models.
+// ---- Imported device models ----
+// Two sources, both only on this machine:
+// - local-models/ (tools/rotato2glb.py, personal use, git-ignored), served next to the build;
+// - GLB files the user imports from the app (core/user-models.js), kept in IndexedDB.
+// Without either the editor offers its built-in models.
 const BASE = '/local-models/';
 const loader = new GLTFLoader();
 const loading = new Map();         // type -> Promise<template>
@@ -12,6 +14,31 @@ const templates = new Map();       // type -> prepared template, ready to clone
 
 export const isLocal = type => typeof type === 'string' && type.startsWith('local:');
 export const localTypes = [];
+let folderModels = 0;
+// Models offered in the pickers: a local-models/ folder replaces the built-in ones;
+// GLBs imported from the app are added to whatever is there.
+export const hasFolderModels = () => folderModels > 0;
+export const pickerTypes = () => hasFolderModels() ? [...localTypes] : [...Object.keys(MODELS).filter(k => !MODELS[k].local), ...localTypes];
+
+const CATEGORY_OF_TAG = { laptop: 'macbook', tablet: 'ipad', desktop: 'ipad' };
+
+// Registers an imported model under `type`. `load` returns the GLB bytes (default: fetch from local-models/).
+export function registerModel(type, { label, entry, thumbnail = null, tags, load, subtitle = 'Modelo local' }){
+  MODELS[type] = {
+    local: true, label, subtitle, defaultScale: 1, caseColor: '#cccccc', file: entry.file, thumbnail, entry,
+    category: tags ? CATEGORY_OF_TAG[tags[0]] ?? 'iphone' : categoryOf(label), tags: tags ?? tagsFor(label, entry),
+    load: load ?? (() => fetch(BASE + entry.file).then(r => { if (!r.ok) throw new Error(r.status + ' ' + entry.file); return r.arrayBuffer(); })),
+    build: caseColor => buildLocal(type, caseColor),
+  };
+  if (!localTypes.includes(type)) localTypes.push(type);
+  localTypes.sort((a, b) => MODELS[a].label.localeCompare(MODELS[b].label, 'es', { numeric: true }));
+}
+
+export function unregisterModel(type){
+  delete MODELS[type]; loading.delete(type); templates.delete(type);
+  const i = localTypes.indexOf(type);
+  if (i >= 0) localTypes.splice(i, 1);
+}
 
 function categoryOf(name){
   const n = name.toLowerCase();
@@ -51,16 +78,10 @@ export async function registerLocalModels(){
     let label = e.name && e.name !== 'Scene' ? e.name : fromFile;     // several source scenes are just called "Scene"
     if (seen.has(label)) label = fromFile;
     seen.set(label, true);
-    const type = 'local:' + e.file;
-    MODELS[type] = {
-      local: true, label, subtitle: 'Modelo local', category: categoryOf(label), defaultScale: 1,
-      caseColor: '#cccccc', file: e.file, thumbnail: e.thumbnail ? BASE + e.thumbnail : null, entry: e, tags: tagsFor(label, e),
-      build: caseColor => buildLocal(type, caseColor),
-    };
-    localTypes.push(type);
+    registerModel('local:' + e.file, { label, entry: e, thumbnail: e.thumbnail ? BASE + e.thumbnail : null });
+    folderModels++;
   }
-  localTypes.sort((a, b) => MODELS[a].label.localeCompare(MODELS[b].label, 'es', { numeric: true }));
-  return localTypes.length;
+  return folderModels;
 }
 
 // Load + prepare once; every device then gets a cheap clone
@@ -68,7 +89,7 @@ export function ensureModel(type){
   if (!isLocal(type)) return Promise.resolve();
   if (!MODELS[type]) return Promise.reject(new Error('Modelo local no disponible: ' + type));
   if (!loading.has(type)) {
-    loading.set(type, loader.loadAsync(BASE + MODELS[type].file).then(gltf => {
+    loading.set(type, MODELS[type].load().then(buf => loader.parseAsync(buf, '')).then(gltf => {
       templates.set(type, prepare(type, gltf.scene));
     }));
     loading.get(type).catch(() => loading.delete(type));
@@ -88,7 +109,8 @@ function prepare(type, root){
   drop.forEach(o => o.removeFromParent());
 
   // screens: glTF puts the UV origin top-left; the editor's textures assume bottom-left → flip once here
-  const screenNames = new Set(entry.screens.map(s => s.node).filter(n => /screen/i.test(n)));
+  // (models imported from the app name their screen meshes exactly; converted ones mix in other nodes)
+  const screenNames = new Set(entry.screens.map(s => s.node).filter(n => entry.exactScreens || /screen/i.test(n)));
   let screenBox = null;
   root.updateMatrixWorld(true);
   root.traverse(o => {
@@ -98,9 +120,10 @@ function prepare(type, root){
     if (!hit) return;
     o.userData.isScreen = true;
     o.geometry = o.geometry.clone();
+    o.geometry.computeBoundingBox();
     const uv = o.geometry.attributes.uv;
     if (uv) for (let i = 0; i < uv.count; i++) uv.setY(i, 1 - uv.getY(i));
-    o.geometry.computeBoundingBox();
+    else planarUVs(o.geometry);
     screenBox ??= o.geometry.boundingBox.getSize(new THREE.Vector3());
   });
   const colorable = new Set(entry.colorableMaterials);
@@ -118,7 +141,7 @@ function prepare(type, root){
   const box = new THREE.Box3().setFromObject(root);
   const center = box.getCenter(new THREE.Vector3());
   const inner = new THREE.Group();
-  inner.scale.setScalar(UNITS_PER_CM);
+  inner.scale.setScalar(UNITS_PER_CM * (entry.cmPerUnit ?? 1));   // GLBs from other tools are often in metres
   root.position.sub(center);
   inner.add(root);
 
@@ -130,6 +153,19 @@ function prepare(type, root){
   model.caseColor = caseColor ?? '#cccccc';
   model.hasScreen = screenNames.size > 0;
   return { inner, colorable };
+}
+
+// A screen mesh without UVs: project the texture onto its two largest dimensions
+function planarUVs(geometry){
+  const size = geometry.boundingBox.getSize(new THREE.Vector3()), min = geometry.boundingBox.min;
+  const [a, b] = ['x', 'y', 'z'].sort((p, q) => size[q] - size[p]);    // the screen's plane
+  const [u, v] = b === 'y' || a === 'y' ? [a === 'y' ? b : a, 'y'] : [a, b];  // keep Y vertical when it's in the plane
+  const pos = geometry.attributes.position, uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) {
+    uv[i * 2] = (pos.getComponent(i, 'xyz'.indexOf(u)) - min[u]) / (size[u] || 1);
+    uv[i * 2 + 1] = (pos.getComponent(i, 'xyz'.indexOf(v)) - min[v]) / (size[v] || 1);
+  }
+  geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
 }
 
 function buildLocal(type, caseColor){

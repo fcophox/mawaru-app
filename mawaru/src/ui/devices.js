@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { state, $ } from '../state.js';
 import { scene, renderer, camera } from '../core/scene.js';
 import { MODELS, buildDeviceMesh } from '../core/device-model.js';
-import { ensureModel, localTypes } from '../core/local-models.js';
+import { ensureModel, localTypes, hasFolderModels } from '../core/local-models.js';
 import { apply, poseOf, clonePose } from '../core/animation.js';
 import { stopVideo, showVideoId, showImageId, syncVideoUI, refitScreen } from './media.js';
 import { applyLook, syncLookUI } from './look.js';
@@ -121,13 +121,14 @@ function nextSlot(type){        // to the right of the right-most device, with a
   return box.max.x + half + 0.8;
 }
 
-// With imported models the selector offers only those; the built-in
-// models are listed only when there are none (or to show a generic device that is already in use).
+// A local-models/ folder replaces the built-in models in the selector (a generic device already in use
+// is still listed); models imported from the app are added next to whichever set is shown.
 export function fillModelSelect(currentType){
   const opt = (k, suffix = '') => `<option value="${k}">${MODELS[k].label}${suffix}</option>`;
   const sel = $('devModel');
-  if (!localTypes.length) {
-    sel.innerHTML = Object.keys(MODELS).filter(k => !MODELS[k].local).map(k => opt(k)).join('');
+  if (!hasFolderModels()) {
+    sel.innerHTML = Object.keys(MODELS).filter(k => !MODELS[k].local).map(k => opt(k)).join('') + localTypes.map(k => opt(k)).join('');
+    if (currentType && MODELS[currentType]) sel.value = currentType;
     return;
   }
   const current = currentType && !MODELS[currentType]?.local ? opt(currentType, ' (genérico)') : '';
