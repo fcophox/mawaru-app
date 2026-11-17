@@ -128,6 +128,14 @@
       <li>Apple Silicon o Intel</li>
       <li>~230 MB de descarga</li>
     </ul>
+    <div class="brew">
+      <p><b>¿Usas Homebrew?</b> Instálala desde la Terminal, sin el aviso de macOS:</p>
+      <div class="cmd">
+        <code>brew install --cask fcophox/tap/mawaru</code>
+        <button type="button" class="copy" data-copy="brew install --cask fcophox/tap/mawaru">Copiar</button>
+      </div>
+      <p class="muted">Para actualizar: <code>brew upgrade --cask mawaru</code></p>
+    </div>
     <details class="install">
       <summary>Cómo instalarla</summary>
       <ol>
@@ -156,6 +164,10 @@
     <details>
       <summary>¿Puedo probarla sin instalar nada?</summary>
       <p>Sí: la <a data-webapp href="https://mawaru-app.vercel.app/">versión web</a> es el mismo editor y funciona en Chrome o Edge. Tus diseños tampoco salen de tu equipo. La app de Mac añade el menú nativo y el trabajo sin conexión.</p>
+    </details>
+    <details>
+      <summary>¿Por qué macOS avisa al abrir la app?</summary>
+      <p>Mawaru todavía no está notarizada por Apple, así que macOS no puede verificar quién la hizo. La primera vez puedes permitirla en <b>Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente</b>. Si la instalas con Homebrew (<code>brew install --cask fcophox/tap/mawaru</code>), no aparece el aviso.</p>
     </details>
     <details>
       <summary>¿Necesito conexión a internet?</summary>
