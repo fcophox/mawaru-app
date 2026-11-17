@@ -16,8 +16,10 @@
     "presets": "python3 tools/extract-presets.py",
     "desktop": "vite build && electron .",
     "desktop:dev": "MAWARU_DEV_URL=http://127.0.0.1:5173 electron .",
-    "dist:mac": "vite build && electron-builder --mac",
-    "desktop:link-models": "mkdir -p \"$HOME/Library/Application Support/Mawaru\" && ln -sfn \"$PWD/local-models\" \"$HOME/Library/Application Support/Mawaru/local-models\""
+    "dist:mac": "vite build && electron-builder --mac --universal",
+    "desktop:link-models": "mkdir -p \"$HOME/Library/Application Support/Mawaru\" && ln -sfn \"$PWD/local-models\" \"$HOME/Library/Application Support/Mawaru/local-models\"",
+    "icon": "electron tools/render-icon.cjs",
+    "dist:mac:arm64": "vite build && electron-builder --mac --arm64"
   },
   "dependencies": {
     "fflate": "0.8.3",
@@ -33,7 +35,8 @@
     "appId": "app.mawaru.desktop",
     "productName": "Mawaru",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "dist/**/*",
@@ -43,19 +46,44 @@
     ],
     "mac": {
       "category": "public.app-category.graphics-design",
+      "icon": "build/icon.png",
       "target": [
         {
-          "target": "dmg",
-          "arch": [
-            "arm64"
-          ]
+          "target": "dmg"
         }
       ],
       "identity": "-",
-      "hardenedRuntime": false
+      "hardenedRuntime": false,
+      "minimumSystemVersion": "12.0",
+      "darkModeSupport": true,
+      "extendInfo": {
+        "CFBundleDisplayName": "Mawaru",
+        "NSHumanReadableCopyright": "© 2026 Mawaru"
+      }
     },
     "dmg": {
-      "title": "Mawaru ${version}"
-    }
-  }
+      "title": "Mawaru ${version}",
+      "artifactName": "Mawaru-${version}-${arch}.${ext}",
+      "iconSize": 112,
+      "window": {
+        "width": 540,
+        "height": 380
+      },
+      "contents": [
+        {
+          "x": 150,
+          "y": 190,
+          "type": "file"
+        },
+        {
+          "x": 390,
+          "y": 190,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "copyright": "© 2026 Mawaru"
+  },
+  "author": "Mawaru"
 }

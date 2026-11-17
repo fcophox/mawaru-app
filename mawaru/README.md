@@ -22,12 +22,16 @@ npm run dev        # http://127.0.0.1:5173
 ```bash
 npm run desktop       # compila y abre Mawaru en su propia ventana
 npm run desktop:dev   # igual, pero cargando el servidor de Vite (antes, npm run dev)
-npm run dist:mac      # genera release/Mawaru-<versión>-arm64.dmg
+npm run dist:mac      # genera release/Mawaru-<versión>-universal.dmg (Apple Silicon + Intel, ~230 MB)
+npm run dist:mac:arm64  # solo Apple Silicon, ~120 MB: más rápido para probar
+npm run icon          # vuelve a generar build/icon.png desde build/icon.svg
 ```
 
 - La app carga `dist/` desde un esquema propio (`app://mawaru`), registrado como contexto seguro, así que la exportación con WebCodecs funciona igual que en `127.0.0.1`. El código está en `electron/main.cjs`.
 - **Modelos:** el `.dmg` no incluye `local-models/`. La app los busca, en orden, en `$MAWARU_MODELS`, en `~/Library/Application Support/Mawaru/local-models` y, sin empaquetar, en el `local-models/` del repo. `npm run desktop:link-models` enlaza el del repo a la carpeta de la app. **Archivo → Mostrar carpeta de modelos** abre esa carpeta.
 - Guardar y exportar abren el diálogo nativo de «Guardar como». El menú **Archivo** tiene Nuevo (⌘N), Abrir (⌘O) y Guardar (⌘S).
+- El icono se dibuja en `build/icon.svg`. `npm run icon` lo exporta a `build/icon.png` (1024 px), y electron-builder genera el `.icns` a partir de él.
+- El `.dmg` muestra la app junto a un acceso a Aplicaciones para arrastrarla. La app requiere macOS 12 o posterior.
 - El `.dmg` está firmado ad hoc, sin cuenta de Apple Developer: abre sin avisos en este Mac, pero en otro Mac Gatekeeper lo bloquea. Para distribuirlo hay que firmarlo y notarizarlo.
 
 ### Lanzador local (sin Electron)
@@ -75,6 +79,7 @@ src/
     exporter.js         render por fotograma (supersampling + jitter) → MP4 / PNG / ZIP
     audio.js            mezcla y codificación AAC del audio de los vídeos
 electron/main.cjs       app de escritorio: ventana, esquema app://, menú y descargas
+build/                  icono de la app (icon.svg → icon.png) para electron-builder
 tools/                  importación local de presets y modelos, y visor de comprobación
 ```
 
