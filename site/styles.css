@@ -71,6 +71,10 @@ details > p a { color: #8fb0ff; }
 .install { max-width: 520px; margin: 26px auto 0; text-align: left; background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 4px 18px; }
 .install ol { margin: 4px 0 10px; padding-left: 20px; }
 .install p { font-size: 14px; margin: 0 0 14px; }
+.unsigned-note { border-top: 1px solid var(--line); padding-top: 12px; color: var(--muted); font-size: 14px; }
+.unsigned-note p { margin: 0 0 8px; }
+.unsigned-note ol { margin: 0 0 8px; }
+.unsigned-note code { display: block; margin-top: 6px; padding: 6px 8px; white-space: nowrap; overflow-x: auto; }
 
 /* ---- FAQ ---- */
 .faq { max-width: 760px; }

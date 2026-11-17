@@ -30,5 +30,5 @@ node mawaru/node_modules/vite/bin/vite.js site   # vista previa local
   - el de la landing (Root Directory `site`, **Framework Preset** *Other*, sin comando de build). `site/vercel.json` define la caché de `assets/`, las URLs limpias y omite el build si el push no toca `site/`.
 - **Dominio de la landing:** https://mawaru.fcophox.com. Las vistas previas al compartir (`og:url`, `og:image` en `site/index.html`) usan ese dominio; cámbialas si se muda.
 - **Descargas:** los botones apuntan a la última release de GitHub. La URL está en `site/site.js` (`DOWNLOAD_URL`). Sube el `.dmg` (`npm run dist:mac` en `mawaru/`) como archivo de una release.
-- **Firma:** cuando el `.dmg` esté firmado y notarizado, pon `SIGNED = true` en `site/site.js`. Así desaparece la nota sobre abrir con clic derecho.
+- **Firma:** cuando el `.dmg` esté firmado y notarizado, pon `SIGNED = true` en `site/site.js`. Así desaparece la nota sobre abrirla desde **Privacidad y seguridad**.
 - **Imágenes y vídeo** (`site/assets/`): están hechos con la propia app y solo con sus modelos integrados, nunca con modelos importados de terceros.
